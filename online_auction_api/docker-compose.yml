@@ -1,0 +1,15 @@
+services:
+  db:
+    image: postgres
+    container_name: postgres-owas
+    environment:
+      POSTGRES_DB: OWAS
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: adminpassword123
+    volumes:
+      - db-data:/var/lib/postgresql/data
+      - ./scripts:/docker-entrypoint-initdb.d
+    ports:
+      - '5432:5432'
+volumes:
+  db-data:
