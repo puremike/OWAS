@@ -29,7 +29,7 @@ func (app *application) health(c *gin.Context) {
 	healthStr := healthResponse{
 		Status:      "Ok",
 		Environment: app.config.env,
-		Message:     "Courier Delivery System is healthy",
+		Message:     "Online Web-Based Auction System is healthy",
 		ApiVersion:  apiVersion,
 	}
 

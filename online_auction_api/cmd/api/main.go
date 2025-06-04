@@ -3,9 +3,11 @@ package main
 import (
 	"time"
 
+	_ "github.com/lib/pq"
 	"github.com/puremike/online_auction_api/internal/auth"
 	"github.com/puremike/online_auction_api/internal/db"
 	"github.com/puremike/online_auction_api/internal/env"
+	"github.com/puremike/online_auction_api/internal/store"
 	"go.uber.org/zap"
 )
 
@@ -13,6 +15,7 @@ type application struct {
 	config  config
 	logger  *zap.SugaredLogger
 	jwtAUth *auth.JWTAuthenticator
+	store   *store.Storage
 }
 
 type config struct {
@@ -35,7 +38,7 @@ type authConfig struct {
 
 const apiVersion = "1.0.0"
 
-// @title					Online Webbased Auction System API
+// @title						Online Webbased Auction System API
 // @version					1.0.0
 // @description				This is an API for a Online Webbased Auction System
 //
@@ -57,7 +60,7 @@ func main() {
 			port: env.GetEnvString("PORT", "6000"),
 			env:  env.GetEnvString("ENV", "development"),
 			dbConfig: dbConfig{
-				db_addr:          env.GetEnvString("DB_ADDR", "postgres://admin:adminpassword123@localhost:5432/OWAS?sslmode=disable"),
+				db_addr:          env.GetEnvString("DB_ADDR", "postgres://user:userpassword@localhost:5432/OWAS?sslmode=disable"),
 				maxIdleConns:     env.GetEnvInt("DB_MAX_IDLE_CONNS", 5),
 				maxOpenConns:     env.GetEnvInt("DB_MAX_OPEN_CONNS", 50),
 				connsMaxIdleTime: env.GetEnvTDuration("DB_CONNS_MAX_IDLE_TIME", 30*time.Minute),
@@ -86,6 +89,7 @@ func main() {
 		logger: logger,
 		jwtAUth: auth.NewJWTAuthenticator(
 			cfg.config.authConfig.secret, cfg.config.authConfig.iss, cfg.config.authConfig.aud),
+		store: store.NewStorage(db),
 	}
 
 	mux := app.routes()
