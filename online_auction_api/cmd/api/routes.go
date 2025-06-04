@@ -21,5 +21,11 @@ func (app *application) routes() http.Handler {
 		api.GET("/health", app.health)
 	}
 
+	user := api.Group("/")
+	{
+		user.POST("/signup", app.registerUser)
+
+	}
+
 	return g
 }
