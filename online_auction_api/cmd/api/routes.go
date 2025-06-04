@@ -18,6 +18,7 @@ func (app *application) routes() http.Handler {
 	api := g.Group("/api/v1")
 	{
 		api.GET("swagger/*any", ginSwagger.WrapHandler(swaggerfiles.Handler))
+		api.GET("/health", app.health)
 	}
 
 	return g
