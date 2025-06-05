@@ -15,7 +15,7 @@ func (u *UserStore) CreateUser(ctx context.Context, user *models.User) (*models.
 	ctx, cancel := context.WithTimeout(ctx, QueryBackgroundTimeout)
 	defer cancel()
 
-	query := `INSERT INTO users (username, email, password, full_name, location, is_admin) VALUES ($1, $2, $3, $4, $5, $6) RETURNING (id, username, email,full_name, location, is_admin, created_at`
+	query := `INSERT INTO users (username, email, password, full_name, location, is_admin) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id, username, email, full_name, location, created_at`
 
 	tx, err := u.db.BeginTx(ctx, nil)
 	if err != nil {
@@ -24,7 +24,7 @@ func (u *UserStore) CreateUser(ctx context.Context, user *models.User) (*models.
 
 	defer tx.Rollback()
 
-	if err = tx.QueryRowContext(ctx, query, user.Username, user.Email, user.Password, user.FullName, user.Location, user.IsAdmin).Scan(&user.ID, &user.Username, &user.Email, &user.FullName, &user.Location, &user.IsAdmin, &user.CreatedAt); err != nil {
+	if err = tx.QueryRowContext(ctx, query, user.Username, user.Email, user.Password, user.FullName, user.Location, user.IsAdmin).Scan(&user.ID, &user.Username, &user.Email, &user.FullName, &user.Location, &user.CreatedAt); err != nil {
 		return nil, err
 	}
 

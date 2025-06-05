@@ -1,6 +1,49 @@
 basePath: /api/v1
 definitions:
-  main.healthResponse:
+  github_com_puremike_online_auction_api_internal_models.CreateUserRequest:
+    properties:
+      confirm_password:
+        type: string
+      email:
+        type: string
+      full_name:
+        maxLength: 32
+        minLength: 6
+        type: string
+      location:
+        maxLength: 42
+        minLength: 6
+        type: string
+      password:
+        type: string
+      username:
+        maxLength: 32
+        minLength: 6
+        type: string
+    required:
+    - confirm_password
+    - email
+    - full_name
+    - location
+    - password
+    - username
+    type: object
+  github_com_puremike_online_auction_api_internal_models.UserResponse:
+    properties:
+      created_at:
+        type: string
+      email:
+        type: string
+      full_name:
+        type: string
+      id:
+        type: string
+      location:
+        type: string
+      username:
+        type: string
+    type: object
+  internal_handlers.healthResponse:
     properties:
       api_version:
         type: string
@@ -34,10 +77,41 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/main.healthResponse'
+            $ref: '#/definitions/internal_handlers.healthResponse'
       summary: Get health
       tags:
       - health
+  /signup:
+    post:
+      consumes:
+      - application/json
+      description: Create a new user
+      parameters:
+      - description: User payload
+        in: body
+        name: payload
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_puremike_online_auction_api_internal_models.CreateUserRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/github_com_puremike_online_auction_api_internal_models.UserResponse'
+        "400":
+          description: Bad Request
+          schema: {}
+        "404":
+          description: Not Found
+          schema: {}
+        "500":
+          description: Internal Server Error
+          schema: {}
+      summary: Create user
+      tags:
+      - Users
 securityDefinitions:
   BearerAuth:
     description: 'Use a valid JWT token. Format: Bearer <token>'

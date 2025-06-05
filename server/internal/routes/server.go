@@ -1,4 +1,4 @@
-package main
+package routes
 
 import (
 	"context"
@@ -8,12 +8,14 @@ import (
 	"os/signal"
 	"syscall"
 	"time"
+
+	"go.uber.org/zap"
 )
 
-func (app *application) server(mux http.Handler) error {
+func RunServer(mux http.Handler, PORT string, logger *zap.SugaredLogger) error {
 
 	srv := &http.Server{
-		Addr:         ":" + app.config.port,
+		Addr:         ":" + PORT,
 		Handler:      mux,
 		ReadTimeout:  time.Second * 10,
 		WriteTimeout: time.Second * 30,
@@ -27,7 +29,7 @@ func (app *application) server(mux http.Handler) error {
 		signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
 		s := <-quit
 
-		app.logger.Infow("Shutting down server", "signal", s.String())
+		logger.Infow("Shutting down server", "signal", s.String())
 
 		ctx, cancel := context.WithTimeout(context.Background(), 7*time.Second)
 		defer cancel()
@@ -35,7 +37,7 @@ func (app *application) server(mux http.Handler) error {
 		shutdown <- srv.Shutdown(ctx)
 	}()
 
-	app.logger.Infow("Starting server on port:", "port", app.config.port, "env", app.config.env)
+	logger.Infow("Starting server on port:", "port", PORT)
 
 	err := srv.ListenAndServe()
 	if !errors.Is(err, http.ErrServerClosed) {

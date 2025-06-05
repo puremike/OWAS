@@ -15,7 +15,7 @@ mdown:
 .PHONY: si
 si:
 	@echo "Generating Swagger docs..."
-	swag init --dir cmd/api/ --parseDependency --parseInternal --parseDepth 3
+	swag init -g cmd/api/main.go --parseDependency --parseInternal --parseDepth 3
 	@echo "Swagger docs generated successfully."
 
 .PHONY: sf

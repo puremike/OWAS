@@ -1,4 +1,4 @@
-package main
+package handlers
 
 import (
 	"net/http"
@@ -13,6 +13,8 @@ type healthResponse struct {
 	ApiVersion  string `json:"api_version"`
 }
 
+var apiVersion = "1.0.1"
+
 // HealthCheck godoc
 //
 //	@Summary		Get health
@@ -24,13 +26,13 @@ type healthResponse struct {
 //	@Router			/health [get]
 //
 //	@SecurityA		BearerAuth
-func (app *application) health(c *gin.Context) {
+func Health(c *gin.Context) {
 
 	healthStr := healthResponse{
-		Status:      "Ok",
-		Environment: app.config.env,
-		Message:     "Online Web-Based Auction System is healthy",
-		ApiVersion:  apiVersion,
+		Status: "Ok",
+		// Environment: app.config.env,
+		Message:    "Online Web-Based Auction System is healthy",
+		ApiVersion: apiVersion,
 	}
 
 	c.JSON(http.StatusOK, healthStr)
