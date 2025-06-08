@@ -1,6 +1,11 @@
 package auth
 
-import "github.com/golang-jwt/jwt/v5"
+import (
+	"crypto/rand"
+	"encoding/base64"
+
+	"github.com/golang-jwt/jwt/v5"
+)
 
 type JWTAuthenticator struct {
 	secret, iss, aud string
@@ -31,4 +36,14 @@ func (j *JWTAuthenticator) ValidateToken(token string) (*jwt.Token, error) {
 		}
 		return []byte(j.secret), nil
 	}, jwt.WithAudience(j.aud), jwt.WithIssuer(j.iss), jwt.WithExpirationRequired(), jwt.WithValidMethods([]string{jwt.SigningMethodHS256.Name}))
+}
+
+func (j *JWTAuthenticator) GenerateRefreshToken() (string, error) {
+
+	b := make([]byte, 32)
+	if _, err := rand.Read(b); err != nil {
+		return "", err
+	}
+
+	return base64.URLEncoding.EncodeToString(b), nil
 }

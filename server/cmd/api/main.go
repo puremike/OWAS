@@ -14,27 +14,40 @@ import (
 	"go.uber.org/zap"
 )
 
-// @title						Online Webbased Auction System API
-// @version					1.0.0
-// @description				This is an API for a Online Webbased Auction System
+//	@title			Online Webbased Auction System API
+//	@version		1.0.0
+//	@description	This is an API for a Online Webbased Auction System
 //
-// @contact.name				Puremike
-// @contact.url				http://github.com/puremike
-// @contact.email				digitalmarketfy@gmail.com
-// @license.name				Apache 2.0
-// @license.url				http://www.apache.org/licenses/LICENSE-2.0.html
+//	@contact.name	Puremike
+//	@contact.url	http://github.com/puremike
+//	@contact.email	digitalmarketfy@gmail.com
+//	@license.name	Apache 2.0
+//	@license.url	http://www.apache.org/licenses/LICENSE-2.0.html
 //
-// @BasePath					/api/v1
-// @securityDefinitions.apikey	BearerAuth
-// @in							header
-// @name						Authorization
-// @description				Use a valid JWT token. Format: Bearer <token>
+//	@BasePath		/api/v1
+
+//	@securityDefinitions.apikey	BearerAuth
+//	@in							header
+//	@name						Authorization
+//	@description				Use a valid JWT token. Format: Bearer <token>
+
+//	@securityDefinitions.apikey	jwtCookieAuth
+//	@type						apiKey
+//	@in							cookie
+//	@name						jwt
+//	@description				JWT (JSON Web Token) access token, sent as an HttpOnly cookie.
+
+// @securityDefinitions.apikey	refreshTokenCookie
+// @type						apiKey
+// @in							cookie
+// @name						refresh_token
+// @description				Refresh token, sent as an HttpOnly cookie.
 func main() {
 
 	docs.SwaggerInfo.BasePath = "/api/v1"
 
 	cfg := config.AppConfig{
-		Port: pkg.GetEnvString("PORT", "6000"),
+		Port: pkg.GetEnvString("PORT", "8080"),
 		Env:  pkg.GetEnvString("ENV", "development"),
 		DbConfig: config.DbConfig{
 			Db_addr:          pkg.GetEnvString("DB_ADDR", "postgres://user:userpassword@localhost:5432/OWAS?sslmode=disable"),
@@ -43,9 +56,11 @@ func main() {
 			ConnsMaxIdleTime: pkg.GetEnvTDuration("DB_CONNS_MAX_IDLE_TIME", 30*time.Minute),
 		},
 		AuthConfig: config.AuthConfig{
-			Aud:    pkg.GetEnvString("JWT_AUD", "OWAS"),
-			Iss:    pkg.GetEnvString("JWT_ISS", "OWAS"),
-			Secret: pkg.GetEnvString("JWT_SECRET", "cb02ad3d42d1818c330c8a3d78f88d2b613b75cd99e56cf2182b9ad5b0c39ef20ddb7e87144d9c94dd212b2f08349c6a090eadd42736f4335a76f482e4f6762a"),
+			Aud:             pkg.GetEnvString("JWT_AUD", "OWAS"),
+			Iss:             pkg.GetEnvString("JWT_ISS", "OWAS"),
+			Secret:          pkg.GetEnvString("JWT_SECRET", "cb02ad3d42d1818c330c8a3d78f88d2b613b75cd99e56cf2182b9ad5b0c39ef20ddb7e87144d9c94dd212b2f08349c6a090eadd42736f4335a76f482e4f6762a"),
+			TokenExp:        pkg.GetEnvTDuration("JWT_TOKEN_EXP", 30*time.Minute),
+			RefreshTokenExp: pkg.GetEnvTDuration("JWT_REFRESH_TOKEN_EXP", 7*24*time.Hour),
 		},
 	}
 

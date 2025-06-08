@@ -11,6 +11,11 @@ import (
 
 type UserRepository interface {
 	CreateUser(ctx context.Context, user *models.User) (*models.User, error)
+	GetUserById(ctx context.Context, id string) (*models.User, error)
+	GetUserByEmail(ctx context.Context, email string) (*models.User, error)
+	GetUserByUsername(ctx context.Context, username string) (*models.User, error)
+	StoreRefreshToken(ctx context.Context, userID, refreshToken string, expires_at time.Time) error
+	ValidateRefreshToken(ctx context.Context, refreshToken string) (string, error)
 }
 
 type AuctionRepository interface {
@@ -46,4 +51,5 @@ func NewStorage(db *sql.DB) *Storage {
 var (
 	QueryBackgroundTimeout = 5 * time.Second
 	ErrUserNotFound        = errors.New("user not found")
+	ErrTokenNotFound       = errors.New("token not found")
 )

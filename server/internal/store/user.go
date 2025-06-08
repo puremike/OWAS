@@ -3,6 +3,8 @@ package store
 import (
 	"context"
 	"database/sql"
+	"errors"
+	"time"
 
 	"github.com/puremike/online_auction_api/internal/models"
 )
@@ -33,4 +35,116 @@ func (u *UserStore) CreateUser(ctx context.Context, user *models.User) (*models.
 	}
 
 	return user, nil
+}
+
+func (u *UserStore) GetUserByEmail(ctx context.Context, email string) (*models.User, error) {
+	ctx, cancel := context.WithTimeout(ctx, QueryBackgroundTimeout)
+	defer cancel()
+
+	user := &models.User{}
+
+	query := `SELECT id, username, email, password, full_name, location, created_at, is_admin FROM users WHERE email = $1`
+
+	if err := u.db.QueryRowContext(ctx, query, email).Scan(&user.ID, &user.Username, &user.Email, &user.Password, &user.FullName, &user.Location, &user.CreatedAt, &user.IsAdmin); err != nil {
+		if err == sql.ErrNoRows {
+			return nil, ErrUserNotFound
+		}
+		return nil, err
+	}
+
+	return user, nil
+}
+
+func (u *UserStore) GetUserByUsername(ctx context.Context, username string) (*models.User, error) {
+	ctx, cancel := context.WithTimeout(ctx, QueryBackgroundTimeout)
+	defer cancel()
+
+	user := &models.User{}
+
+	query := `SELECT id, username, email, password, full_name, location, created_at, is_admin FROM users WHERE username = $1`
+
+	if err := u.db.QueryRowContext(ctx, query, username).Scan(&user.ID, &user.Username, &user.Email, &user.Password, &user.FullName, &user.Location, &user.CreatedAt, &user.IsAdmin); err != nil {
+		if err == sql.ErrNoRows {
+			return nil, ErrUserNotFound
+		}
+		return nil, err
+	}
+
+	return user, nil
+}
+
+func (u *UserStore) GetUserById(ctx context.Context, id string) (*models.User, error) {
+	ctx, cancel := context.WithTimeout(ctx, QueryBackgroundTimeout)
+	defer cancel()
+
+	user := &models.User{}
+
+	query := `SELECT id, username, email, password, full_name, location, created_at, is_admin FROM users WHERE id = $1`
+
+	if err := u.db.QueryRowContext(ctx, query, id).Scan(&user.ID, &user.Username, &user.Email, &user.Password, &user.FullName, &user.Location, &user.CreatedAt, &user.IsAdmin); err != nil {
+		if err == sql.ErrNoRows {
+			return nil, ErrUserNotFound
+		}
+		return nil, err
+	}
+
+	return user, nil
+}
+
+func (u *UserStore) StoreRefreshToken(ctx context.Context, userID, refreshToken string, expires_at time.Time) error {
+	ctx, cancel := context.WithTimeout(ctx, QueryBackgroundTimeout)
+	defer cancel()
+
+	tx, err := u.db.BeginTx(ctx, nil)
+	if err != nil {
+		return err
+	}
+
+	defer func() {
+		if err != nil {
+			tx.Rollback()
+		}
+	}()
+
+	// delete existing refresh tokens for the user
+	deleteQuery := `DELETE FROM refresh_tokens WHERE user_id = $1`
+
+	if _, err = tx.ExecContext(ctx, deleteQuery, userID); err != nil {
+		return err
+	}
+
+	// Insert the new refresh token
+	insertQuery := `INSERT INTO refresh_tokens (user_id, token, expires_at) VALUES ($1, $2, $3) `
+
+	if _, err = tx.ExecContext(ctx, insertQuery, userID, refreshToken, expires_at); err != nil {
+		return err
+	}
+
+	if err = tx.Commit(); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (u *UserStore) ValidateRefreshToken(ctx context.Context, refreshToken string) (string, error) {
+	ctx, cancel := context.WithTimeout(ctx, QueryBackgroundTimeout)
+	defer cancel()
+
+	var userID string
+	var expiresAt time.Time
+
+	query := `SELECT user_id, expires_at FROM refresh_tokens WHERE token = $1`
+
+	if err := u.db.QueryRowContext(ctx, query, refreshToken).Scan(&userID, &expiresAt); err != nil {
+		if err == sql.ErrNoRows {
+			return "", ErrTokenNotFound
+		}
+		return "", err
+	}
+	if time.Now().After(expiresAt) {
+		return "", errors.New("refresh token expired")
+	}
+
+	return userID, nil
 }

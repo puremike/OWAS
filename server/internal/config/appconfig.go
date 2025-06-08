@@ -31,6 +31,8 @@ type DbConfig struct {
 
 type AuthConfig struct {
 	Aud, Iss, Secret string
+	TokenExp         time.Duration
+	RefreshTokenExp  time.Duration
 }
 
 const ApiVersion = "1.0.1"

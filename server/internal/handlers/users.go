@@ -5,17 +5,21 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/puremike/online_auction_api/contexts"
+	"github.com/puremike/online_auction_api/internal/config"
 	"github.com/puremike/online_auction_api/internal/models"
 	"github.com/puremike/online_auction_api/internal/services"
 )
 
 type UserHandler struct {
 	service *services.UserService
+	app     *config.Application
 }
 
-func NewUserHandler(service *services.UserService) *UserHandler {
+func NewUserHandler(service *services.UserService, app *config.Application) *UserHandler {
 	return &UserHandler{
 		service: service,
+		app:     app,
 	}
 }
 
@@ -68,4 +72,139 @@ func (u *UserHandler) RegisterUser(c *gin.Context) {
 		Location:  createdUser.Location,
 		CreatedAt: createdUser.CreatedAt.Format(time.RFC3339),
 	})
+}
+
+// Login godoc
+//
+//	@Summary		Login User
+//	@Description	Authenticates a user using email and password.
+//	@Description	Upon successful authentication, a short-lived **JWT (access token)** is set as an `HttpOnly` cookie named `jwt`.
+//	@Description	A long-lived **refresh token** is also set as an `HttpOnly` cookie named `refresh_token`.
+//	@Description	Both cookies are crucial for maintaining user session and subsequent authenticated requests.
+//	@Tags			Users
+//	@Accept			json
+//	@Produce		json
+//	@Param			payload	body		models.LoginRequest	true	"Login credentials"
+//	@Success		200		{object}	string				"login successful"
+//	@Success		200		{header}	string				Set-Cookie	"Two HttpOnly cookies are set: 'jwt' (access token) and 'refresh_token' (refresh token)."
+//	@Failure		400		{object}	gin.H				"Bad Request - invalid input"
+//	@Failure		401		{object}	gin.H				"Unauthorized - invalid credentials"
+//	@Failure		500		{object}	gin.H				"Internal Server Error"
+//	@Router			/login [post]
+func (u *UserHandler) Login(c *gin.Context) {
+
+	var payload models.LoginRequest
+	if err := c.ShouldBindJSON(&payload); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	user, err := u.service.Login(c.Request.Context(), &payload)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid credentials"})
+		return
+	}
+
+	c.SetCookie("jwt", user.Token, int(u.app.AppConfig.AuthConfig.TokenExp.Seconds()), "/", "", false, true)
+	c.SetCookie("refresh_token", user.RefreshToken, int(u.app.AppConfig.AuthConfig.RefreshTokenExp.Seconds()), "/", "", false, true)
+	c.SetSameSite(http.SameSiteStrictMode)
+
+	c.JSON(http.StatusOK, "login successful")
+}
+
+// Logout godoc
+//
+//	@Summary		Logout User
+//	@Description	Clears the user's authentication cookies, effectively logging them out.
+//	@Tags			Users
+//	@Success		200	{object}	gin.H	"Logout successful"
+//	@Router			/logout [post]
+//
+// @Security		jwtCookieAuth
+func (u *UserHandler) Logout(c *gin.Context) {
+	c.SetCookie("jwt", "", -1, "/", "", false, true)
+	c.SetCookie("refresh_token", "", -1, "/", "", false, true)
+	c.SetSameSite(http.SameSiteStrictMode)
+
+	c.JSON(http.StatusOK, gin.H{"message": "logout successful"})
+}
+
+// RefreshToken godoc
+//
+//	@Summary		Refresh JWT Token
+//	@Description	Refreshes the JWT access token using a valid refresh token.
+//	@Description	If the refresh token is valid, a new JWT is generated and set as an `HttpOnly` cookie.
+//	@Description	A valid refresh token must be provided as an `HttpOnly` cookie named `refresh_token`.
+//	@Tags			Users
+//	@Accept			json
+//	@Produce		json
+//	@Success		200	{object}	gin.H	"Token refreshed successfully"
+//	@Failure		401	{object}	gin.H	"Unauthorized - Refresh token not found or invalid"
+//	@Failure		500	{object}	gin.H	"Internal Server Error - Failed to generate new token"
+//	@Router			/refresh [post]
+func (u *UserHandler) RefreshToken(c *gin.Context) {
+	refreshToken, err := c.Cookie("refresh_token")
+
+	if refreshToken == "" || err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "refresh token not found"})
+		return
+	}
+
+	newToken, err := u.service.Refresh(c.Request.Context(), refreshToken)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid or expired refresh token"})
+		return
+	}
+
+	c.SetCookie("jwt", newToken, int(u.app.AppConfig.AuthConfig.TokenExp.Seconds()), "/", "", false, true)
+	c.SetSameSite(http.SameSiteStrictMode)
+
+	c.JSON(http.StatusOK, gin.H{"message": "token refreshed successfully"})
+}
+
+// UserProfile godoc
+//
+//	@Summary		Get User Profile
+//	@Description	Retrieves the profile of the user associated with the access token.
+//	@Description	Access token must be provided as an `HttpOnly` cookie named `jwt`.
+//	@Tags			Users
+//	@Accept			json
+//	@Param			username	path		string	true	"Username of the user to retrieve profile for"
+//	@Produce		json
+//	@Success		200			{object}	models.UserResponse
+//	@Failure		401			{object}	gin.H	"Unauthorized - invalid or expired token"
+//	@Failure		404			{object}	gin.H	"User not found"
+//	@Failure		500			{object}	gin.H	"Internal Server Error"
+//	@Router			/{username} [get]
+//
+// @Security		jwtCookieAuth
+func (u *UserHandler) UserProfile(c *gin.Context) {
+
+	authUser := contexts.GetUserFromContext(c)
+	if authUser == nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+		return
+	}
+
+	username := c.Param("username")
+	if username == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "username is required"})
+		return
+	}
+
+	user, err := u.service.UserProfile(c.Request.Context(), username)
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "user not found"})
+		return
+	}
+
+	res := models.UserResponse{
+		ID:       user.ID,
+		Username: user.Username,
+		Email:    user.Email,
+		FullName: user.FullName,
+		Location: user.Location,
+	}
+
+	c.JSON(http.StatusOK, res)
 }

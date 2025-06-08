@@ -7,9 +7,8 @@ services:
       POSTGRES_USER: admin
       POSTGRES_PASSWORD: adminpassword123
     volumes:
-      - db-data:/var/lib/postgresql/data
-      - ./scripts:/docker-entrypoint-initdb.d
+      - owas-pg-data:/var/lib/postgresql/data
     ports:
       - '5433:5432'
 volumes:
-  db-data:
+  owas-pg-data:

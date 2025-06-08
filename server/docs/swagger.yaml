@@ -1,5 +1,8 @@
 basePath: /api/v1
 definitions:
+  gin.H:
+    additionalProperties: {}
+    type: object
   github_com_puremike_online_auction_api_internal_models.CreateUserRequest:
     properties:
       confirm_password:
@@ -27,6 +30,16 @@ definitions:
     - location
     - password
     - username
+    type: object
+  github_com_puremike_online_auction_api_internal_models.LoginRequest:
+    properties:
+      email:
+        type: string
+      password:
+        type: string
+    required:
+    - email
+    - password
     type: object
   github_com_puremike_online_auction_api_internal_models.UserResponse:
     properties:
@@ -66,6 +79,43 @@ info:
   title: Online Webbased Auction System API
   version: 1.0.0
 paths:
+  /{username}:
+    get:
+      consumes:
+      - application/json
+      description: |-
+        Retrieves the profile of the user associated with the access token.
+        Access token must be provided as an `HttpOnly` cookie named `jwt`.
+      parameters:
+      - description: Username of the user to retrieve profile for
+        in: path
+        name: username
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github_com_puremike_online_auction_api_internal_models.UserResponse'
+        "401":
+          description: Unauthorized - invalid or expired token
+          schema:
+            $ref: '#/definitions/gin.H'
+        "404":
+          description: User not found
+          schema:
+            $ref: '#/definitions/gin.H'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/gin.H'
+      security:
+      - jwtCookieAuth: []
+      summary: Get User Profile
+      tags:
+      - Users
   /health:
     get:
       consumes:
@@ -81,6 +131,85 @@ paths:
       summary: Get health
       tags:
       - health
+  /login:
+    post:
+      consumes:
+      - application/json
+      description: |-
+        Authenticates a user using email and password.
+        Upon successful authentication, a short-lived **JWT (access token)** is set as an `HttpOnly` cookie named `jwt`.
+        A long-lived **refresh token** is also set as an `HttpOnly` cookie named `refresh_token`.
+        Both cookies are crucial for maintaining user session and subsequent authenticated requests.
+      parameters:
+      - description: Login credentials
+        in: body
+        name: payload
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_puremike_online_auction_api_internal_models.LoginRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 'Two HttpOnly cookies are set: ''jwt'' (access token) and ''refresh_token''
+            (refresh token).'
+          schema:
+            type: header
+        "400":
+          description: Bad Request - invalid input
+          schema:
+            $ref: '#/definitions/gin.H'
+        "401":
+          description: Unauthorized - invalid credentials
+          schema:
+            $ref: '#/definitions/gin.H'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/gin.H'
+      summary: Login User
+      tags:
+      - Users
+  /logout:
+    post:
+      description: Clears the user's authentication cookies, effectively logging them
+        out.
+      responses:
+        "200":
+          description: Logout successful
+          schema:
+            $ref: '#/definitions/gin.H'
+      security:
+      - jwtCookieAuth: []
+      summary: Logout User
+      tags:
+      - Users
+  /refresh:
+    post:
+      consumes:
+      - application/json
+      description: |-
+        Refreshes the JWT access token using a valid refresh token.
+        If the refresh token is valid, a new JWT is generated and set as an `HttpOnly` cookie.
+        A valid refresh token must be provided as an `HttpOnly` cookie named `refresh_token`.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Token refreshed successfully
+          schema:
+            $ref: '#/definitions/gin.H'
+        "401":
+          description: Unauthorized - Refresh token not found or invalid
+          schema:
+            $ref: '#/definitions/gin.H'
+        "500":
+          description: Internal Server Error - Failed to generate new token
+          schema:
+            $ref: '#/definitions/gin.H'
+      summary: Refresh JWT Token
+      tags:
+      - Users
   /signup:
     post:
       consumes:
@@ -117,5 +246,15 @@ securityDefinitions:
     description: 'Use a valid JWT token. Format: Bearer <token>'
     in: header
     name: Authorization
+    type: apiKey
+  jwtCookieAuth:
+    description: JWT (JSON Web Token) access token, sent as an HttpOnly cookie.
+    in: cookie
+    name: jwt
+    type: apiKey
+  refreshTokenCookie:
+    description: Refresh token, sent as an HttpOnly cookie.
+    in: cookie
+    name: refresh_token
     type: apiKey
 swagger: "2.0"

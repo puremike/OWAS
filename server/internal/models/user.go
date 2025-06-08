@@ -32,3 +32,15 @@ type UserResponse struct {
 	Location  string `json:"location"`
 	CreatedAt string `json:"created_at"`
 }
+
+type LoginRequest struct {
+	Email    string `json:"email" binding:"required,email"`
+	Password string `json:"password" binding:"required,passwd"`
+}
+
+type LoginResponse struct {
+	Token        string `json:"token"`
+	RefreshToken string `json:"refresh_token"`
+	ID           string `json:"id"`
+	Username     string `json:"username"`
+}
