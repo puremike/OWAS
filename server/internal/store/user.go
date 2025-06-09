@@ -6,6 +6,7 @@ import (
 	"errors"
 	"time"
 
+	"github.com/puremike/online_auction_api/internal/errs"
 	"github.com/puremike/online_auction_api/internal/models"
 )
 
@@ -47,7 +48,7 @@ func (u *UserStore) GetUserByEmail(ctx context.Context, email string) (*models.U
 
 	if err := u.db.QueryRowContext(ctx, query, email).Scan(&user.ID, &user.Username, &user.Email, &user.Password, &user.FullName, &user.Location, &user.CreatedAt, &user.IsAdmin); err != nil {
 		if err == sql.ErrNoRows {
-			return nil, ErrUserNotFound
+			return nil, errs.ErrUserNotFound
 		}
 		return nil, err
 	}
@@ -65,7 +66,7 @@ func (u *UserStore) GetUserByUsername(ctx context.Context, username string) (*mo
 
 	if err := u.db.QueryRowContext(ctx, query, username).Scan(&user.ID, &user.Username, &user.Email, &user.Password, &user.FullName, &user.Location, &user.CreatedAt, &user.IsAdmin); err != nil {
 		if err == sql.ErrNoRows {
-			return nil, ErrUserNotFound
+			return nil, errs.ErrUserNotFound
 		}
 		return nil, err
 	}
@@ -83,12 +84,62 @@ func (u *UserStore) GetUserById(ctx context.Context, id string) (*models.User, e
 
 	if err := u.db.QueryRowContext(ctx, query, id).Scan(&user.ID, &user.Username, &user.Email, &user.Password, &user.FullName, &user.Location, &user.CreatedAt, &user.IsAdmin); err != nil {
 		if err == sql.ErrNoRows {
-			return nil, ErrUserNotFound
+			return nil, errs.ErrUserNotFound
 		}
 		return nil, err
 	}
 
 	return user, nil
+}
+
+func (u *UserStore) UpdateUser(ctx context.Context, user *models.User, id string) error {
+	ctx, cancel := context.WithTimeout(ctx, QueryBackgroundTimeout)
+	defer cancel()
+
+	query := `UPDATE users SET username = $1, email = $2, full_name = $3, location = $4 WHERE id = $5`
+
+	tx, err := u.db.BeginTx(ctx, nil)
+	if err != nil {
+		return err
+	}
+
+	defer tx.Rollback()
+
+	if _, err = tx.ExecContext(ctx, query, user.Username, user.Email, user.FullName, user.Location, id); err != nil {
+		return err
+	}
+
+	if err = tx.Commit(); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (u *UserStore) ChangePassword(ctx context.Context, pass, id string) error {
+	ctx, cancel := context.WithTimeout(ctx, QueryBackgroundTimeout)
+	defer cancel()
+
+	query := `UPDATE users SET password = $1 WHERE id = $2`
+
+	tx, err := u.db.BeginTx(ctx, nil)
+	if err != nil {
+		return err
+	}
+
+	defer tx.Rollback()
+
+	var newPassword string
+
+	if _, err = tx.ExecContext(ctx, query, newPassword, id); err != nil {
+		return err
+	}
+
+	if err = tx.Commit(); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (u *UserStore) StoreRefreshToken(ctx context.Context, userID, refreshToken string, expires_at time.Time) error {
@@ -100,11 +151,7 @@ func (u *UserStore) StoreRefreshToken(ctx context.Context, userID, refreshToken 
 		return err
 	}
 
-	defer func() {
-		if err != nil {
-			tx.Rollback()
-		}
-	}()
+	defer tx.Rollback()
 
 	// delete existing refresh tokens for the user
 	deleteQuery := `DELETE FROM refresh_tokens WHERE user_id = $1`
@@ -138,7 +185,7 @@ func (u *UserStore) ValidateRefreshToken(ctx context.Context, refreshToken strin
 
 	if err := u.db.QueryRowContext(ctx, query, refreshToken).Scan(&userID, &expiresAt); err != nil {
 		if err == sql.ErrNoRows {
-			return "", ErrTokenNotFound
+			return "", errs.ErrTokenNotFound
 		}
 		return "", err
 	}

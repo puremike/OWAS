@@ -9,7 +9,7 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/puremike/online_auction_api/contexts"
 	"github.com/puremike/online_auction_api/internal/config"
-	"github.com/puremike/online_auction_api/internal/store"
+	"github.com/puremike/online_auction_api/internal/errs"
 )
 
 type Middeware struct {
@@ -66,7 +66,7 @@ func (m *Middeware) AuthMiddleware() gin.HandlerFunc {
 
 		user, err := m.app.Store.Users.GetUserById(c.Request.Context(), userId)
 		if err != nil {
-			if errors.Is(err, store.ErrUserNotFound) {
+			if errors.Is(err, errs.ErrUserNotFound) {
 				c.JSON(http.StatusUnauthorized, gin.H{"error": "user not found"})
 				c.Abort()
 				return

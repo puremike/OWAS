@@ -255,6 +255,134 @@ const docTemplate = `{
                     }
                 }
             }
+        },
+        "/{username}/change-password": {
+            "put": {
+                "security": [
+                    {
+                        "jwtCookieAuth": []
+                    }
+                ],
+                "description": "Allows an authenticated user to change their password.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Users"
+                ],
+                "summary": "Change User Password",
+                "parameters": [
+                    {
+                        "description": "Password update payload",
+                        "name": "payload",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/github_com_puremike_online_auction_api_internal_models.PasswordUpdateRequest"
+                        }
+                    },
+                    {
+                        "type": "string",
+                        "description": "Username of the user to change password for",
+                        "name": "username",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Password changed successfully",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request - invalid input",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized - user not authenticated",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error - failed to change password",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    }
+                }
+            }
+        },
+        "/{username}/update-profile": {
+            "put": {
+                "security": [
+                    {
+                        "jwtCookieAuth": []
+                    }
+                ],
+                "description": "Allows an authenticated user to update their profile details such as username, email, full name, and location.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Users"
+                ],
+                "summary": "Update user profile",
+                "parameters": [
+                    {
+                        "description": "Profile update payload",
+                        "name": "payload",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/github_com_puremike_online_auction_api_internal_models.UserProfileUpdateRequest"
+                        }
+                    },
+                    {
+                        "type": "string",
+                        "description": "Username of the user to update profile for",
+                        "name": "username",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Profile updated successfully",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request - invalid input",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized - user not authenticated",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error - failed to update profile",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    }
+                }
+            }
         }
     },
     "definitions": {
@@ -295,7 +423,7 @@ const docTemplate = `{
                 "username": {
                     "type": "string",
                     "maxLength": 32,
-                    "minLength": 6
+                    "minLength": 4
                 }
             }
         },
@@ -311,6 +439,54 @@ const docTemplate = `{
                 },
                 "password": {
                     "type": "string"
+                }
+            }
+        },
+        "github_com_puremike_online_auction_api_internal_models.PasswordUpdateRequest": {
+            "type": "object",
+            "required": [
+                "confirm_password",
+                "new_password",
+                "old_password"
+            ],
+            "properties": {
+                "confirm_password": {
+                    "type": "string"
+                },
+                "new_password": {
+                    "type": "string"
+                },
+                "old_password": {
+                    "type": "string"
+                }
+            }
+        },
+        "github_com_puremike_online_auction_api_internal_models.UserProfileUpdateRequest": {
+            "type": "object",
+            "required": [
+                "email",
+                "full_name",
+                "location",
+                "username"
+            ],
+            "properties": {
+                "email": {
+                    "type": "string"
+                },
+                "full_name": {
+                    "type": "string",
+                    "maxLength": 32,
+                    "minLength": 6
+                },
+                "location": {
+                    "type": "string",
+                    "maxLength": 42,
+                    "minLength": 6
+                },
+                "username": {
+                    "type": "string",
+                    "maxLength": 32,
+                    "minLength": 4
                 }
             }
         },

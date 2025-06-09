@@ -38,6 +38,8 @@ func Routes(app *config.Application) http.Handler {
 	{
 		authGroup.POST("/logout", userHandler.Logout)
 		authGroup.GET("/:username", userHandler.UserProfile)
+		authGroup.PUT("/:username/update-profile", userHandler.UpdateProfile)
+		authGroup.PUT("/:username/change-password", userHandler.ChangePassword)
 	}
 
 	return g

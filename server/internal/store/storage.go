@@ -3,7 +3,6 @@ package store
 import (
 	"context"
 	"database/sql"
-	"errors"
 	"time"
 
 	"github.com/puremike/online_auction_api/internal/models"
@@ -15,7 +14,9 @@ type UserRepository interface {
 	GetUserByEmail(ctx context.Context, email string) (*models.User, error)
 	GetUserByUsername(ctx context.Context, username string) (*models.User, error)
 	StoreRefreshToken(ctx context.Context, userID, refreshToken string, expires_at time.Time) error
+	UpdateUser(ctx context.Context, user *models.User, id string) error
 	ValidateRefreshToken(ctx context.Context, refreshToken string) (string, error)
+	ChangePassword(ctx context.Context, pass, id string) error
 }
 
 type AuctionRepository interface {
@@ -50,6 +51,4 @@ func NewStorage(db *sql.DB) *Storage {
 
 var (
 	QueryBackgroundTimeout = 5 * time.Second
-	ErrUserNotFound        = errors.New("user not found")
-	ErrTokenNotFound       = errors.New("token not found")
 )

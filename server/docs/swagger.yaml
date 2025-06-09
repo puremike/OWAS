@@ -21,7 +21,7 @@ definitions:
         type: string
       username:
         maxLength: 32
-        minLength: 6
+        minLength: 4
         type: string
     required:
     - confirm_password
@@ -40,6 +40,41 @@ definitions:
     required:
     - email
     - password
+    type: object
+  github_com_puremike_online_auction_api_internal_models.PasswordUpdateRequest:
+    properties:
+      confirm_password:
+        type: string
+      new_password:
+        type: string
+      old_password:
+        type: string
+    required:
+    - confirm_password
+    - new_password
+    - old_password
+    type: object
+  github_com_puremike_online_auction_api_internal_models.UserProfileUpdateRequest:
+    properties:
+      email:
+        type: string
+      full_name:
+        maxLength: 32
+        minLength: 6
+        type: string
+      location:
+        maxLength: 42
+        minLength: 6
+        type: string
+      username:
+        maxLength: 32
+        minLength: 4
+        type: string
+    required:
+    - email
+    - full_name
+    - location
+    - username
     type: object
   github_com_puremike_online_auction_api_internal_models.UserResponse:
     properties:
@@ -114,6 +149,89 @@ paths:
       security:
       - jwtCookieAuth: []
       summary: Get User Profile
+      tags:
+      - Users
+  /{username}/change-password:
+    put:
+      consumes:
+      - application/json
+      description: Allows an authenticated user to change their password.
+      parameters:
+      - description: Password update payload
+        in: body
+        name: payload
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_puremike_online_auction_api_internal_models.PasswordUpdateRequest'
+      - description: Username of the user to change password for
+        in: path
+        name: username
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Password changed successfully
+          schema:
+            type: string
+        "400":
+          description: Bad Request - invalid input
+          schema:
+            $ref: '#/definitions/gin.H'
+        "401":
+          description: Unauthorized - user not authenticated
+          schema:
+            $ref: '#/definitions/gin.H'
+        "500":
+          description: Internal Server Error - failed to change password
+          schema:
+            $ref: '#/definitions/gin.H'
+      security:
+      - jwtCookieAuth: []
+      summary: Change User Password
+      tags:
+      - Users
+  /{username}/update-profile:
+    put:
+      consumes:
+      - application/json
+      description: Allows an authenticated user to update their profile details such
+        as username, email, full name, and location.
+      parameters:
+      - description: Profile update payload
+        in: body
+        name: payload
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_puremike_online_auction_api_internal_models.UserProfileUpdateRequest'
+      - description: Username of the user to update profile for
+        in: path
+        name: username
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Profile updated successfully
+          schema:
+            type: string
+        "400":
+          description: Bad Request - invalid input
+          schema:
+            $ref: '#/definitions/gin.H'
+        "401":
+          description: Unauthorized - user not authenticated
+          schema:
+            $ref: '#/definitions/gin.H'
+        "500":
+          description: Internal Server Error - failed to update profile
+          schema:
+            $ref: '#/definitions/gin.H'
+      security:
+      - jwtCookieAuth: []
+      summary: Update user profile
       tags:
       - Users
   /health:

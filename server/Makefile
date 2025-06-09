@@ -26,7 +26,7 @@ sf:
 .PHONY: dkup
 dkup:
 	@echo "Starting Docker containers..."
-	docker compose up -d
+	docker compose up
 
 .PHONY: dkdown
 dkdown:

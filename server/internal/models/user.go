@@ -16,7 +16,7 @@ type User struct {
 }
 
 type CreateUserRequest struct {
-	Username        string `json:"username" binding:"required,min=6,max=32"`
+	Username        string `json:"username" binding:"required,min=4,max=32"`
 	Email           string `json:"email" binding:"required,email"`
 	Password        string `json:"password" binding:"required,passwd"`
 	ConfirmPassword string `json:"confirm_password" binding:"required"`
@@ -33,9 +33,16 @@ type UserResponse struct {
 	CreatedAt string `json:"created_at"`
 }
 
+type UserProfileUpdateRequest struct {
+	Username string `json:"username" binding:"required,min=4,max=32"`
+	Email    string `json:"email" binding:"required,email"`
+	FullName string `json:"full_name" binding:"required,min=6,max=32"`
+	Location string `json:"location" binding:"required,min=6,max=42"`
+}
+
 type LoginRequest struct {
 	Email    string `json:"email" binding:"required,email"`
-	Password string `json:"password" binding:"required,passwd"`
+	Password string `json:"password" binding:"required"`
 }
 
 type LoginResponse struct {
@@ -43,4 +50,14 @@ type LoginResponse struct {
 	RefreshToken string `json:"refresh_token"`
 	ID           string `json:"id"`
 	Username     string `json:"username"`
+}
+
+type PasswordUpdateRequest struct {
+	OldPassword     string `json:"old_password" binding:"required"`
+	NewPassword     string `json:"new_password" binding:"required,passwd"`
+	ConfirmPassword string `json:"confirm_password" binding:"required"`
+}
+type PasswordResponse struct {
+	Message  string `json:"message"`
+	Password string `json:"password"`
 }
