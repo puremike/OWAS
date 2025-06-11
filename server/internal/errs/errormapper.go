@@ -118,6 +118,37 @@ func MapServiceErrors(c *gin.Context, err error) {
 			Message: err.Error(),
 		}
 		statusCode = http.StatusBadRequest
+
+	case errors.Is(err, ErrAuctionNotFound):
+		apiError = APIError{
+			Message: err.Error(),
+		}
+		statusCode = http.StatusNotFound
+
+	case errors.Is(err, ErrInvalidAuctionDetails):
+		apiError = APIError{
+			Message: err.Error(),
+		}
+		statusCode = http.StatusBadRequest
+
+	case errors.Is(err, ErrFailedToCreateAuction):
+		apiError = APIError{
+			Message: err.Error(),
+		}
+		statusCode = http.StatusBadRequest
+
+	case errors.Is(err, ErrFailedToUpdateAuction):
+		apiError = APIError{
+			Message: err.Error(),
+		}
+		statusCode = http.StatusBadRequest
+
+	case errors.Is(err, ErrFailedToDeleteAuction):
+		apiError = APIError{
+			Message: err.Error(),
+		}
+		statusCode = http.StatusBadRequest
+
 	default:
 		apiError = APIError{
 			Message: "an unexpected error occurred",

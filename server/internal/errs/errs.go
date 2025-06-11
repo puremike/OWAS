@@ -21,3 +21,11 @@ var (
 	ErrInvalidPassword         = errors.New("invalid password")
 	ErrPasswordCannotBeSame    = errors.New("new password cannot be the same as the old password")
 )
+
+var (
+	ErrAuctionNotFound       = errors.New("auction not found")
+	ErrInvalidAuctionDetails = errors.New("invalid auction details")
+	ErrFailedToCreateAuction = errors.New("failed to create auction")
+	ErrFailedToUpdateAuction = errors.New("failed to update auction")
+	ErrFailedToDeleteAuction = errors.New("failed to delete auction")
+)

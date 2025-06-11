@@ -20,6 +20,11 @@ type UserRepository interface {
 }
 
 type AuctionRepository interface {
+	GetAuctionById(ctx context.Context, id string) (*models.Auction, error)
+	GetAuctions(ctx context.Context) (*[]models.Auction, error)
+	CreateAuction(ctx context.Context, auction *models.Auction) (*models.Auction, error)
+	UpdateAuction(ctx context.Context, auction *models.Auction, id string) error
+	DeleteAuction(ctx context.Context, id string) error
 }
 
 type BidRepository interface {

@@ -43,9 +43,15 @@ func (u *UserService) CreateUser(ctx context.Context, user *models.User) (*model
 		return nil, errs.ErrFailedToHashPassword
 	}
 
-	user.Password = hashedPassword
+	us := &models.User{
+		Username: user.Username,
+		Email:    user.Email,
+		Password: hashedPassword,
+		FullName: user.FullName,
+		Location: user.Location,
+	}
 
-	createdUser, err := u.repo.CreateUser(ctx, user)
+	createdUser, err := u.repo.CreateUser(ctx, us)
 	if err != nil {
 		return nil, errs.ErrFailedToCreateUser
 	}
@@ -181,7 +187,14 @@ func (u *UserService) UpdateProfile(ctx context.Context, req *models.User, id st
 		return "", errs.ErrInvalidUserDetails
 	}
 
-	if err := u.repo.UpdateUser(ctx, req, id); err != nil {
+	us := &models.User{
+		Username: req.Username,
+		Email:    req.Email,
+		FullName: req.FullName,
+		Location: req.Location,
+	}
+
+	if err := u.repo.UpdateUser(ctx, us, id); err != nil {
 		return "", errs.ErrFailedToUpdateUser
 	}
 
