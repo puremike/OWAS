@@ -4,10 +4,12 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"strings"
 	"time"
 
 	"github.com/puremike/online_auction_api/internal/errs"
 	"github.com/puremike/online_auction_api/internal/models"
+	"github.com/puremike/online_auction_api/internal/utils"
 )
 
 type UserStore struct {
@@ -46,7 +48,7 @@ func (u *UserStore) GetUserByEmail(ctx context.Context, email string) (*models.U
 
 	query := `SELECT id, username, email, password, full_name, location, created_at, is_admin FROM users WHERE email = $1`
 
-	if err := u.db.QueryRowContext(ctx, query, email).Scan(&user.ID, &user.Username, &user.Email, &user.Password, &user.FullName, &user.Location, &user.CreatedAt, &user.IsAdmin); err != nil {
+	if err := u.db.QueryRowContext(ctx, query, strings.ToLower(email)).Scan(&user.ID, &user.Username, &user.Email, &user.Password, &user.FullName, &user.Location, &user.CreatedAt, &user.IsAdmin); err != nil {
 		if err == sql.ErrNoRows {
 			return nil, errs.ErrUserNotFound
 		}
@@ -120,6 +122,11 @@ func (u *UserStore) ChangePassword(ctx context.Context, pass, id string) error {
 	ctx, cancel := context.WithTimeout(ctx, QueryBackgroundTimeout)
 	defer cancel()
 
+	hashedPassword, err := utils.HashedPassword(pass)
+	if err != nil {
+		return err
+	}
+
 	query := `UPDATE users SET password = $1 WHERE id = $2`
 
 	tx, err := u.db.BeginTx(ctx, nil)
@@ -129,9 +136,7 @@ func (u *UserStore) ChangePassword(ctx context.Context, pass, id string) error {
 
 	defer tx.Rollback()
 
-	var newPassword string
-
-	if _, err = tx.ExecContext(ctx, query, newPassword, id); err != nil {
+	if _, err = tx.ExecContext(ctx, query, hashedPassword, id); err != nil {
 		return err
 	}
 
@@ -194,4 +199,37 @@ func (u *UserStore) ValidateRefreshToken(ctx context.Context, refreshToken strin
 	}
 
 	return userID, nil
+}
+
+func (u *UserStore) GetUsers(ctx context.Context) (*[]models.User, error) {
+	ctx, cancel := context.WithTimeout(ctx, QueryBackgroundTimeout)
+	defer cancel()
+
+	var users []models.User
+
+	query := `SELECT id, username, email, password, full_name, location, created_at, is_admin FROM users`
+
+	rows, err := u.db.QueryContext(ctx, query)
+	if err != nil {
+		return nil, err
+	}
+
+	defer rows.Close()
+
+	for rows.Next() {
+		var u models.User
+
+		if err := rows.Scan(&u.ID, &u.Username, &u.Email, &u.Password, &u.FullName, &u.Location, &u.CreatedAt, &u.IsAdmin); err != nil {
+			return nil, err
+		}
+
+		users = append(users, u)
+
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return &users, nil
 }

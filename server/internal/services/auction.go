@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 
 	"github.com/puremike/online_auction_api/internal/errs"
 	"github.com/puremike/online_auction_api/internal/models"
@@ -20,7 +21,7 @@ func NewAuctionService(repo store.AuctionRepository) *AuctionService {
 	}
 }
 
-func (a *AuctionService) CreateAuction(ctx context.Context, req models.Auction) (*models.CreateAuctionResponse, error) {
+func (a *AuctionService) CreateAuction(ctx context.Context, req *models.Auction) (*models.CreateAuctionResponse, error) {
 
 	ctx, cancel := context.WithTimeout(ctx, QueryDefaultContext)
 	defer cancel()
@@ -34,7 +35,7 @@ func (a *AuctionService) CreateAuction(ctx context.Context, req models.Auction) 
 		Description:   req.Description,
 		StartingPrice: req.StartingPrice,
 		CurrentPrice:  req.StartingPrice,
-		Type:          req.Type,
+		Type:          strings.ToLower(req.Type),
 		Status:        "open",
 		StartTime:     req.StartTime,
 		EndTime:       req.EndTime,
@@ -63,7 +64,7 @@ func (a *AuctionService) CreateAuction(ctx context.Context, req models.Auction) 
 	return res, nil
 }
 
-func (a *AuctionService) UpdateAuction(ctx context.Context, req models.Auction, id string) (string, error) {
+func (a *AuctionService) UpdateAuction(ctx context.Context, req *models.Auction, id string) (string, error) {
 
 	ctx, cancel := context.WithTimeout(ctx, QueryDefaultContext)
 	defer cancel()

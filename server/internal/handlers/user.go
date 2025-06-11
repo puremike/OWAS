@@ -181,12 +181,11 @@ func (u *UserHandler) RefreshToken(c *gin.Context) {
 //	@Security		jwtCookieAuth
 func (u *UserHandler) UserProfile(c *gin.Context) {
 
-	authUser := contexts.GetUserFromContext(c)
-	if authUser == nil {
+	authUser, err := contexts.GetUserFromContext(c)
+	if authUser == nil || err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
 		return
 	}
-
 	username := c.Param("username")
 	if username == "" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "username is required"})
@@ -200,11 +199,12 @@ func (u *UserHandler) UserProfile(c *gin.Context) {
 	}
 
 	res := models.UserResponse{
-		ID:       user.ID,
-		Username: user.Username,
-		Email:    user.Email,
-		FullName: user.FullName,
-		Location: user.Location,
+		ID:        user.ID,
+		Username:  user.Username,
+		Email:     user.Email,
+		FullName:  user.FullName,
+		Location:  user.Location,
+		CreatedAt: user.CreatedAt,
 	}
 
 	c.JSON(http.StatusOK, res)
@@ -219,10 +219,10 @@ func (u *UserHandler) UserProfile(c *gin.Context) {
 //	@Produce		json
 //	@Param			payload		body		models.UserProfileUpdateRequest	true	"Profile update payload"
 //	@Param			username	path		string							true	"Username of the user to update profile for"
-//	@Success		201			{object}	string	"Profile updated successfully"
-//	@Failure		400			{object}	gin.H	"Bad Request - invalid input"
-//	@Failure		401			{object}	gin.H	"Unauthorized - user not authenticated"
-//	@Failure		500			{object}	gin.H	"Internal Server Error - failed to update profile"
+//	@Success		201			{object}	string							"Profile updated successfully"
+//	@Failure		400			{object}	gin.H							"Bad Request - invalid input"
+//	@Failure		401			{object}	gin.H							"Unauthorized - user not authenticated"
+//	@Failure		500			{object}	gin.H							"Internal Server Error - failed to update profile"
 //	@Router			/{username}/update-profile [put]
 //
 //	@Security		jwtCookieAuth
@@ -234,8 +234,8 @@ func (u *UserHandler) UpdateProfile(c *gin.Context) {
 		return
 	}
 
-	authUser := contexts.GetUserFromContext(c)
-	if authUser == nil {
+	authUser, err := contexts.GetUserFromContext(c)
+	if authUser == nil || err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
 		return
 	}
@@ -286,10 +286,10 @@ func (u *UserHandler) UpdateProfile(c *gin.Context) {
 //	@Produce		json
 //	@Param			payload		body		models.PasswordUpdateRequest	true	"Password update payload"
 //	@Param			username	path		string							true	"Username of the user to change password for"
-//	@Success		201			{object}	string	"Password changed successfully"
-//	@Failure		400			{object}	gin.H	"Bad Request - invalid input"
-//	@Failure		401			{object}	gin.H	"Unauthorized - user not authenticated"
-//	@Failure		500			{object}	gin.H	"Internal Server Error - failed to change password"
+//	@Success		201			{object}	string							"Password changed successfully"
+//	@Failure		400			{object}	gin.H							"Bad Request - invalid input"
+//	@Failure		401			{object}	gin.H							"Unauthorized - user not authenticated"
+//	@Failure		500			{object}	gin.H							"Internal Server Error - failed to change password"
 //	@Router			/{username}/change-password [put]
 //
 //	@Security		jwtCookieAuth
@@ -301,8 +301,8 @@ func (u *UserHandler) ChangePassword(c *gin.Context) {
 		return
 	}
 
-	authUser := contexts.GetUserFromContext(c)
-	if authUser == nil {
+	authUser, err := contexts.GetUserFromContext(c)
+	if authUser == nil || err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
 		return
 	}
@@ -335,4 +335,46 @@ func (u *UserHandler) ChangePassword(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusCreated, msg)
+}
+
+// AdminGetUsers godoc
+//
+//	@Summary		Get all users
+//	@Description	Retrieves all users
+//	@Tags			Users
+//	@Accept			json
+//	@Produce		json
+//	@Success		200	{object}	[]models.UserResponse
+//	@Failure		401	{object}	gin.H	"Unauthorized - user not authenticated"
+//	@Failure		500	{object}	gin.H	"Internal Server Error - failed to retrieve users"
+//	@Router			/admin/users [get]
+//
+//	@Security		jwtCookieAuth
+func (u *UserHandler) AdminGetUsers(c *gin.Context) {
+
+	authUser, err := contexts.GetUserFromContext(c)
+	if authUser == nil || err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+		return
+	}
+
+	users, err := u.service.GetUsers(c.Request.Context())
+	if err != nil {
+		errs.MapServiceErrors(c, err)
+		return
+	}
+
+	res := &[]models.UserResponse{}
+	for _, user := range *users {
+		*res = append(*res, models.UserResponse{
+			ID:        user.ID,
+			Username:  user.Username,
+			Email:     user.Email,
+			FullName:  user.FullName,
+			Location:  user.Location,
+			CreatedAt: user.CreatedAt,
+		})
+	}
+
+	c.JSON(http.StatusOK, res)
 }

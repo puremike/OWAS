@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
@@ -12,6 +13,8 @@ import (
 	"github.com/puremike/online_auction_api/internal/models"
 	"github.com/puremike/online_auction_api/internal/store"
 	"github.com/puremike/online_auction_api/internal/utils"
+	"golang.org/x/text/cases"
+	"golang.org/x/text/language"
 )
 
 type UserService struct {
@@ -27,6 +30,8 @@ func NewUserService(repo store.UserRepository, app *config.Application) *UserSer
 }
 
 const QueryDefaultContext = 5 * time.Second
+
+var MyCaser = cases.Title(language.English, cases.NoLower)
 
 func (u *UserService) CreateUser(ctx context.Context, user *models.User) (*models.UserResponse, error) {
 
@@ -44,8 +49,8 @@ func (u *UserService) CreateUser(ctx context.Context, user *models.User) (*model
 	}
 
 	us := &models.User{
-		Username: user.Username,
-		Email:    user.Email,
+		Username: strings.ToLower(user.Username),
+		Email:    strings.ToLower(user.Email),
 		Password: hashedPassword,
 		FullName: user.FullName,
 		Location: user.Location,
@@ -58,11 +63,11 @@ func (u *UserService) CreateUser(ctx context.Context, user *models.User) (*model
 
 	res := &models.UserResponse{
 		ID:        createdUser.ID,
-		Username:  createdUser.Username,
+		Username:  MyCaser.String(createdUser.Username),
 		Email:     createdUser.Email,
-		FullName:  createdUser.FullName,
+		FullName:  MyCaser.String(createdUser.FullName),
 		Location:  createdUser.Location,
-		CreatedAt: createdUser.CreatedAt.Format(time.RFC3339),
+		CreatedAt: createdUser.CreatedAt,
 	}
 
 	return res, nil
@@ -130,20 +135,21 @@ func (u *UserService) UserProfile(ctx context.Context, username string) (*models
 	ctx, cancel := context.WithTimeout(ctx, QueryDefaultContext)
 	defer cancel()
 
-	user, err := u.repo.GetUserByUsername(ctx, username)
+	user, err := u.repo.GetUserByUsername(ctx, strings.ToLower(username))
 	if err != nil {
 		if errors.Is(err, errs.ErrUserNotFound) {
 			return &models.UserResponse{}, errs.ErrUserNotFound
 		}
 		return &models.UserResponse{}, fmt.Errorf("failed to retrieve user: %w", err)
+
 	}
 	return &models.UserResponse{
 		ID:        user.ID,
-		Username:  user.Username,
+		Username:  MyCaser.String(user.Username),
 		Email:     user.Email,
-		FullName:  user.FullName,
-		Location:  user.Location,
-		CreatedAt: user.CreatedAt.Format(time.RFC3339),
+		FullName:  MyCaser.String(user.FullName),
+		Location:  MyCaser.String(user.Location),
+		CreatedAt: user.CreatedAt,
 	}, nil
 }
 
@@ -188,8 +194,8 @@ func (u *UserService) UpdateProfile(ctx context.Context, req *models.User, id st
 	}
 
 	us := &models.User{
-		Username: req.Username,
-		Email:    req.Email,
+		Username: strings.ToLower(req.Username),
+		Email:    strings.ToLower(req.Email),
 		FullName: req.FullName,
 		Location: req.Location,
 	}
@@ -240,4 +246,29 @@ func (u *UserService) ChangePassword(ctx context.Context, req *models.PasswordUp
 	}
 
 	return "password changed successfully", nil
+}
+
+func (u *UserService) GetUsers(ctx context.Context) (*[]models.UserResponse, error) {
+
+	ctx, cancel := context.WithTimeout(ctx, QueryDefaultContext)
+	defer cancel()
+
+	users, err := u.repo.GetUsers(ctx)
+	if err != nil {
+		return &[]models.UserResponse{}, errors.New("failed to retrieve users")
+	}
+
+	res := &[]models.UserResponse{}
+
+	for _, user := range *users {
+		*res = append(*res, models.UserResponse{
+			ID:        user.ID,
+			Username:  MyCaser.String(user.Username),
+			Email:     user.Email,
+			FullName:  MyCaser.String(user.FullName),
+			Location:  MyCaser.String(user.Location),
+			CreatedAt: user.CreatedAt,
+		})
+	}
+	return res, nil
 }

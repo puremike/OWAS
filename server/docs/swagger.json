@@ -16,6 +16,380 @@
     },
     "basePath": "/api/v1",
     "paths": {
+        "/admin/auctions": {
+            "get": {
+                "security": [
+                    {
+                        "jwtCookieAuth": []
+                    }
+                ],
+                "description": "Fetches a list of all auctions with admin privileges.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Auctions"
+                ],
+                "summary": "Retrieve All Auctions (Admin)",
+                "responses": {
+                    "200": {
+                        "description": "List of auctions",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/github_com_puremike_online_auction_api_internal_models.CreateAuctionResponse"
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized - user not authenticated",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error - failed to retrieve auctions",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    }
+                }
+            }
+        },
+        "/admin/auctions/{auctionID}": {
+            "delete": {
+                "security": [
+                    {
+                        "jwtCookieAuth": []
+                    }
+                ],
+                "description": "Allows an admin to delete any auction.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Auctions"
+                ],
+                "summary": "Admin Delete Auction",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "ID of the auction to delete",
+                        "name": "auctionID",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Deleted auction",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_puremike_online_auction_api_internal_models.Auction"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized - user not authenticated",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    },
+                    "404": {
+                        "description": "NotFound - auction not found",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error - failed to delete auction",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    }
+                }
+            }
+        },
+        "/admin/users": {
+            "get": {
+                "security": [
+                    {
+                        "jwtCookieAuth": []
+                    }
+                ],
+                "description": "Retrieves all users",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Users"
+                ],
+                "summary": "Get all users",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/github_com_puremike_online_auction_api_internal_models.UserResponse"
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized - user not authenticated",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error - failed to retrieve users",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    }
+                }
+            }
+        },
+        "/auctions": {
+            "post": {
+                "security": [
+                    {
+                        "jwtCookieAuth": []
+                    }
+                ],
+                "description": "Create a new auction",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Auctions"
+                ],
+                "summary": "Create Auction",
+                "parameters": [
+                    {
+                        "description": "Auction payload",
+                        "name": "payload",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/github_com_puremike_online_auction_api_internal_models.CreateAuctionRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_puremike_online_auction_api_internal_models.CreateAuctionResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request - invalid input",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized - user not authenticated",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error - failed to create auction",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    }
+                }
+            }
+        },
+        "/auctions/{auctionID}": {
+            "get": {
+                "security": [
+                    {
+                        "jwtCookieAuth": []
+                    }
+                ],
+                "description": "Retrieves an auction by its ID.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Auctions"
+                ],
+                "summary": "Get Auction By ID",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "ID of the auction to retrieve",
+                        "name": "auctionID",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Retrieved auction",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_puremike_online_auction_api_internal_models.Auction"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized - user not authenticated",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    },
+                    "404": {
+                        "description": "NotFound - auction not found",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error - failed to retrieve auction",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    }
+                }
+            },
+            "put": {
+                "security": [
+                    {
+                        "jwtCookieAuth": []
+                    }
+                ],
+                "description": "Allows a seller to update an auction they have created.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Auctions"
+                ],
+                "summary": "Update Auction",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "ID of the auction to update",
+                        "name": "auctionID",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Auction update payload",
+                        "name": "payload",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/github_com_puremike_online_auction_api_internal_models.CreateAuctionRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Updated auction",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_puremike_online_auction_api_internal_models.Auction"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request - invalid input",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized - user not authenticated",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    },
+                    "404": {
+                        "description": "NotFound - auction not found",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error - failed to update auction",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "jwtCookieAuth": []
+                    }
+                ],
+                "description": "Allows a seller to delete an auction they have created.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Auctions"
+                ],
+                "summary": "Delete Auction",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "ID of the auction to delete",
+                        "name": "auctionID",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Deleted auction",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_puremike_online_auction_api_internal_models.Auction"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized - user not authenticated",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    },
+                    "404": {
+                        "description": "NotFound - auction not found",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error - failed to delete auction",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    }
+                }
+            }
+        },
         "/health": {
             "get": {
                 "description": "Returns the status of the application",
@@ -382,6 +756,126 @@
         "gin.H": {
             "type": "object",
             "additionalProperties": {}
+        },
+        "github_com_puremike_online_auction_api_internal_models.Auction": {
+            "type": "object",
+            "properties": {
+                "created_at": {
+                    "type": "string"
+                },
+                "current_price": {
+                    "type": "number"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "end_time": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "seller_id": {
+                    "type": "string"
+                },
+                "start_time": {
+                    "type": "string"
+                },
+                "starting_price": {
+                    "type": "number"
+                },
+                "status": {
+                    "description": "\"open\", \"closed\"",
+                    "type": "string"
+                },
+                "title": {
+                    "type": "string"
+                },
+                "type": {
+                    "description": "\"english\", \"dutch\", \"sealed\"",
+                    "type": "string"
+                },
+                "updated_at": {
+                    "type": "string"
+                }
+            }
+        },
+        "github_com_puremike_online_auction_api_internal_models.CreateAuctionRequest": {
+            "type": "object",
+            "required": [
+                "description",
+                "end_time",
+                "start_time",
+                "starting_price",
+                "title",
+                "type"
+            ],
+            "properties": {
+                "description": {
+                    "type": "string"
+                },
+                "end_time": {
+                    "type": "string"
+                },
+                "start_time": {
+                    "description": "Status        string    `json:\"status\" binding:\"required,oneof=open closed\"`",
+                    "type": "string"
+                },
+                "starting_price": {
+                    "type": "number",
+                    "minimum": 1
+                },
+                "title": {
+                    "type": "string"
+                },
+                "type": {
+                    "description": "CurrentPrice  float64   `json:\"current_price\" binding:\"required,gte=1\"`",
+                    "type": "string",
+                    "enum": [
+                        "english",
+                        "dutch",
+                        "sealed"
+                    ]
+                }
+            }
+        },
+        "github_com_puremike_online_auction_api_internal_models.CreateAuctionResponse": {
+            "type": "object",
+            "properties": {
+                "created_at": {
+                    "type": "string"
+                },
+                "current_price": {
+                    "type": "number"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "end_time": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "seller_id": {
+                    "type": "string"
+                },
+                "start_time": {
+                    "type": "string"
+                },
+                "starting_price": {
+                    "type": "number"
+                },
+                "status": {
+                    "type": "string"
+                },
+                "title": {
+                    "type": "string"
+                },
+                "type": {
+                    "type": "string"
+                }
+            }
         },
         "github_com_puremike_online_auction_api_internal_models.CreateUserRequest": {
             "type": "object",

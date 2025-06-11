@@ -25,12 +25,12 @@ type CreateUserRequest struct {
 }
 
 type UserResponse struct {
-	ID        string `json:"id"`
-	Username  string `json:"username"`
-	Email     string `json:"email"`
-	FullName  string `json:"full_name"`
-	Location  string `json:"location"`
-	CreatedAt string `json:"created_at"`
+	ID        string    `json:"id"`
+	Username  string    `json:"username"`
+	Email     string    `json:"email"`
+	FullName  string    `json:"full_name"`
+	Location  string    `json:"location"`
+	CreatedAt time.Time `json:"created_at"`
 }
 
 type UserProfileUpdateRequest struct {

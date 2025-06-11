@@ -85,7 +85,12 @@ func (m *Middeware) AuthMiddleware() gin.HandlerFunc {
 // Grant administrator access to the user
 func AuthorizeRoles(allowedRole bool) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		user := contexts.GetUserFromContext(c)
+
+		user, err := contexts.GetUserFromContext(c)
+		if err != nil {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+			return
+		}
 
 		if user.IsAdmin && allowedRole {
 			c.Next()
@@ -93,5 +98,28 @@ func AuthorizeRoles(allowedRole bool) gin.HandlerFunc {
 		}
 
 		c.AbortWithStatusJSON(http.StatusForbidden, gin.H{"error": "forbidden: insufficient role"})
+	}
+}
+
+func (m *Middeware) AuctionMiddleware() gin.HandlerFunc {
+	return func(c *gin.Context) {
+
+		auctionId := c.Param("auctionID")
+
+		auction, err := m.app.Store.Auctions.GetAuctionById(c.Request.Context(), auctionId)
+
+		if err != nil {
+			if errors.Is(err, errs.ErrAuctionNotFound) {
+				c.JSON(http.StatusNotFound, gin.H{"error": "auction not found"})
+				c.Abort()
+				return
+			}
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to retrieve auction"})
+			c.Abort()
+			return
+		}
+
+		c.Set("auction", auction)
+		c.Next()
 	}
 }

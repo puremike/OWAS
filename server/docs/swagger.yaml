@@ -3,6 +3,90 @@ definitions:
   gin.H:
     additionalProperties: {}
     type: object
+  github_com_puremike_online_auction_api_internal_models.Auction:
+    properties:
+      created_at:
+        type: string
+      current_price:
+        type: number
+      description:
+        type: string
+      end_time:
+        type: string
+      id:
+        type: string
+      seller_id:
+        type: string
+      start_time:
+        type: string
+      starting_price:
+        type: number
+      status:
+        description: '"open", "closed"'
+        type: string
+      title:
+        type: string
+      type:
+        description: '"english", "dutch", "sealed"'
+        type: string
+      updated_at:
+        type: string
+    type: object
+  github_com_puremike_online_auction_api_internal_models.CreateAuctionRequest:
+    properties:
+      description:
+        type: string
+      end_time:
+        type: string
+      start_time:
+        description: Status        string    `json:"status" binding:"required,oneof=open
+          closed"`
+        type: string
+      starting_price:
+        minimum: 1
+        type: number
+      title:
+        type: string
+      type:
+        description: CurrentPrice  float64   `json:"current_price" binding:"required,gte=1"`
+        enum:
+        - english
+        - dutch
+        - sealed
+        type: string
+    required:
+    - description
+    - end_time
+    - start_time
+    - starting_price
+    - title
+    - type
+    type: object
+  github_com_puremike_online_auction_api_internal_models.CreateAuctionResponse:
+    properties:
+      created_at:
+        type: string
+      current_price:
+        type: number
+      description:
+        type: string
+      end_time:
+        type: string
+      id:
+        type: string
+      seller_id:
+        type: string
+      start_time:
+        type: string
+      starting_price:
+        type: number
+      status:
+        type: string
+      title:
+        type: string
+      type:
+        type: string
+    type: object
   github_com_puremike_online_auction_api_internal_models.CreateUserRequest:
     properties:
       confirm_password:
@@ -234,6 +318,244 @@ paths:
       summary: Update user profile
       tags:
       - Users
+  /admin/auctions:
+    get:
+      consumes:
+      - application/json
+      description: Fetches a list of all auctions with admin privileges.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: List of auctions
+          schema:
+            items:
+              $ref: '#/definitions/github_com_puremike_online_auction_api_internal_models.CreateAuctionResponse'
+            type: array
+        "401":
+          description: Unauthorized - user not authenticated
+          schema:
+            $ref: '#/definitions/gin.H'
+        "500":
+          description: Internal Server Error - failed to retrieve auctions
+          schema:
+            $ref: '#/definitions/gin.H'
+      security:
+      - jwtCookieAuth: []
+      summary: Retrieve All Auctions (Admin)
+      tags:
+      - Auctions
+  /admin/auctions/{auctionID}:
+    delete:
+      consumes:
+      - application/json
+      description: Allows an admin to delete any auction.
+      parameters:
+      - description: ID of the auction to delete
+        in: path
+        name: auctionID
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Deleted auction
+          schema:
+            $ref: '#/definitions/github_com_puremike_online_auction_api_internal_models.Auction'
+        "401":
+          description: Unauthorized - user not authenticated
+          schema:
+            $ref: '#/definitions/gin.H'
+        "404":
+          description: NotFound - auction not found
+          schema:
+            $ref: '#/definitions/gin.H'
+        "500":
+          description: Internal Server Error - failed to delete auction
+          schema:
+            $ref: '#/definitions/gin.H'
+      security:
+      - jwtCookieAuth: []
+      summary: Admin Delete Auction
+      tags:
+      - Auctions
+  /admin/users:
+    get:
+      consumes:
+      - application/json
+      description: Retrieves all users
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/github_com_puremike_online_auction_api_internal_models.UserResponse'
+            type: array
+        "401":
+          description: Unauthorized - user not authenticated
+          schema:
+            $ref: '#/definitions/gin.H'
+        "500":
+          description: Internal Server Error - failed to retrieve users
+          schema:
+            $ref: '#/definitions/gin.H'
+      security:
+      - jwtCookieAuth: []
+      summary: Get all users
+      tags:
+      - Users
+  /auctions:
+    post:
+      consumes:
+      - application/json
+      description: Create a new auction
+      parameters:
+      - description: Auction payload
+        in: body
+        name: payload
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_puremike_online_auction_api_internal_models.CreateAuctionRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/github_com_puremike_online_auction_api_internal_models.CreateAuctionResponse'
+        "400":
+          description: Bad Request - invalid input
+          schema:
+            $ref: '#/definitions/gin.H'
+        "401":
+          description: Unauthorized - user not authenticated
+          schema:
+            $ref: '#/definitions/gin.H'
+        "500":
+          description: Internal Server Error - failed to create auction
+          schema:
+            $ref: '#/definitions/gin.H'
+      security:
+      - jwtCookieAuth: []
+      summary: Create Auction
+      tags:
+      - Auctions
+  /auctions/{auctionID}:
+    delete:
+      consumes:
+      - application/json
+      description: Allows a seller to delete an auction they have created.
+      parameters:
+      - description: ID of the auction to delete
+        in: path
+        name: auctionID
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Deleted auction
+          schema:
+            $ref: '#/definitions/github_com_puremike_online_auction_api_internal_models.Auction'
+        "401":
+          description: Unauthorized - user not authenticated
+          schema:
+            $ref: '#/definitions/gin.H'
+        "404":
+          description: NotFound - auction not found
+          schema:
+            $ref: '#/definitions/gin.H'
+        "500":
+          description: Internal Server Error - failed to delete auction
+          schema:
+            $ref: '#/definitions/gin.H'
+      security:
+      - jwtCookieAuth: []
+      summary: Delete Auction
+      tags:
+      - Auctions
+    get:
+      consumes:
+      - application/json
+      description: Retrieves an auction by its ID.
+      parameters:
+      - description: ID of the auction to retrieve
+        in: path
+        name: auctionID
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Retrieved auction
+          schema:
+            $ref: '#/definitions/github_com_puremike_online_auction_api_internal_models.Auction'
+        "401":
+          description: Unauthorized - user not authenticated
+          schema:
+            $ref: '#/definitions/gin.H'
+        "404":
+          description: NotFound - auction not found
+          schema:
+            $ref: '#/definitions/gin.H'
+        "500":
+          description: Internal Server Error - failed to retrieve auction
+          schema:
+            $ref: '#/definitions/gin.H'
+      security:
+      - jwtCookieAuth: []
+      summary: Get Auction By ID
+      tags:
+      - Auctions
+    put:
+      consumes:
+      - application/json
+      description: Allows a seller to update an auction they have created.
+      parameters:
+      - description: ID of the auction to update
+        in: path
+        name: auctionID
+        required: true
+        type: string
+      - description: Auction update payload
+        in: body
+        name: payload
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_puremike_online_auction_api_internal_models.CreateAuctionRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Updated auction
+          schema:
+            $ref: '#/definitions/github_com_puremike_online_auction_api_internal_models.Auction'
+        "400":
+          description: Bad Request - invalid input
+          schema:
+            $ref: '#/definitions/gin.H'
+        "401":
+          description: Unauthorized - user not authenticated
+          schema:
+            $ref: '#/definitions/gin.H'
+        "404":
+          description: NotFound - auction not found
+          schema:
+            $ref: '#/definitions/gin.H'
+        "500":
+          description: Internal Server Error - failed to update auction
+          schema:
+            $ref: '#/definitions/gin.H'
+      security:
+      - jwtCookieAuth: []
+      summary: Update Auction
+      tags:
+      - Auctions
   /health:
     get:
       consumes:

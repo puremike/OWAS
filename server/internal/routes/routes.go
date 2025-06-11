@@ -18,6 +18,8 @@ func Routes(app *config.Application) http.Handler {
 
 	userService := services.NewUserService(app.Store.Users, app)
 	userHandler := handlers.NewUserHandler(userService, app)
+	auctionService := services.NewAuctionService(app.Store.Auctions)
+	auctionHandler := handlers.NewAuctionHandler(auctionService, app)
 	middleware := middlewares.NewMiddleware(app)
 
 	api := g.Group("/api/v1")
@@ -40,6 +42,15 @@ func Routes(app *config.Application) http.Handler {
 		authGroup.GET("/:username", userHandler.UserProfile)
 		authGroup.PUT("/:username/update-profile", userHandler.UpdateProfile)
 		authGroup.PUT("/:username/change-password", userHandler.ChangePassword)
+
+		authGroup.GET("/admin/users", middlewares.AuthorizeRoles(true), userHandler.AdminGetUsers)
+		authGroup.GET("/admin/auctions", middlewares.AuthorizeRoles(true), auctionHandler.AdminGetAuctions)
+		authGroup.DELETE("/admin/auctions/:auctionID", middleware.AuctionMiddleware(), middlewares.AuthorizeRoles(true), auctionHandler.AdminDeleteAuction)
+
+		authGroup.POST("/auctions", auctionHandler.CreateAuction)
+		authGroup.GET("/auctions/:auctionID", middleware.AuctionMiddleware(), auctionHandler.GetAuctionById)
+		authGroup.PUT("/auctions/:auctionID", middleware.AuctionMiddleware(), auctionHandler.UpdateAuction)
+		authGroup.DELETE("/auctions/:auctionID", middleware.AuctionMiddleware(), auctionHandler.DeleteAuction)
 	}
 
 	return g
