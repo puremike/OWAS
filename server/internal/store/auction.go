@@ -31,6 +31,27 @@ func (a *AuctionStore) GetAuctionById(ctx context.Context, id string) (*models.A
 	return auction, nil
 }
 
+func (a *AuctionStore) CloseAuction(ctx context.Context, status, id string) error {
+
+	ctx, cancel := context.WithTimeout(ctx, QueryBackgroundTimeout)
+	defer cancel()
+
+	query := `UPDATE auctions SET status = $1 WHERE id = $2`
+
+	tx, err := a.db.BeginTx(ctx, nil)
+	if err != nil {
+		return err
+	}
+
+	defer tx.Rollback()
+
+	if _, err := tx.ExecContext(ctx, query, status, id); err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func (a *AuctionStore) GetAuctions(ctx context.Context) (*[]models.Auction, error) {
 	ctx, cancel := context.WithTimeout(ctx, QueryBackgroundTimeout)
 	defer cancel()

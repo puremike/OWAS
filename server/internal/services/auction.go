@@ -12,12 +12,17 @@ import (
 )
 
 type AuctionService struct {
-	repo store.AuctionRepository
+	repo           store.AuctionRepository
+	bidRepo        store.BidRepository
+	auctionUpdates chan<- *models.AuctionUpdateEvent
+	notifications  chan<- *models.NotificationEvent
 }
 
-func NewAuctionService(repo store.AuctionRepository) *AuctionService {
+func NewAuctionService(repo store.AuctionRepository, auctionUpdates chan<- *models.AuctionUpdateEvent, notifications chan<- *models.NotificationEvent) *AuctionService {
 	return &AuctionService{
-		repo: repo,
+		repo:           repo,
+		auctionUpdates: auctionUpdates,
+		notifications:  notifications,
 	}
 }
 

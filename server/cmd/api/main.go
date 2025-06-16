@@ -10,6 +10,7 @@ import (
 	"github.com/puremike/online_auction_api/internal/db"
 	"github.com/puremike/online_auction_api/internal/routes"
 	"github.com/puremike/online_auction_api/internal/store"
+	"github.com/puremike/online_auction_api/internal/ws"
 	"github.com/puremike/online_auction_api/pkg"
 	"go.uber.org/zap"
 )
@@ -81,7 +82,10 @@ func main() {
 		JwtAUth: auth.NewJWTAuthenticator(
 			cfg.AuthConfig.Secret, cfg.AuthConfig.Iss, cfg.AuthConfig.Aud),
 		Store: store.NewStorage(db),
+		WsHub: ws.NewHub(),
 	}
+
+	go app.WsHub.Run()
 
 	mux := routes.Routes(app)
 	logger.Fatal(routes.RunServer(mux, cfg.Port, logger))

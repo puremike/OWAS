@@ -5,6 +5,7 @@ import (
 
 	"github.com/puremike/online_auction_api/internal/auth"
 	"github.com/puremike/online_auction_api/internal/store"
+	"github.com/puremike/online_auction_api/internal/ws"
 	"go.uber.org/zap"
 )
 
@@ -13,6 +14,7 @@ type Application struct {
 	Logger    *zap.SugaredLogger
 	JwtAUth   *auth.JWTAuthenticator
 	Store     *store.Storage
+	WsHub     *ws.Hub
 }
 
 type AppConfig struct {

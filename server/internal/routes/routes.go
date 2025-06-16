@@ -18,7 +18,7 @@ func Routes(app *config.Application) http.Handler {
 
 	userService := services.NewUserService(app.Store.Users, app)
 	userHandler := handlers.NewUserHandler(userService, app)
-	auctionService := services.NewAuctionService(app.Store.Auctions)
+	auctionService := services.NewAuctionService(app.Store.Auctions, app.WsHub.AuctionUpdates, app.WsHub.NotificationUpdates)
 	auctionHandler := handlers.NewAuctionHandler(auctionService, app)
 	middleware := middlewares.NewMiddleware(app)
 

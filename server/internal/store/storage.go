@@ -24,11 +24,17 @@ type AuctionRepository interface {
 	GetAuctionById(ctx context.Context, id string) (*models.Auction, error)
 	GetAuctions(ctx context.Context) (*[]models.Auction, error)
 	CreateAuction(ctx context.Context, auction *models.Auction) (*models.Auction, error)
+	CloseAuction(ctx context.Context, status, id string) error
 	UpdateAuction(ctx context.Context, auction *models.Auction, id string) error
 	DeleteAuction(ctx context.Context, id string) error
 }
 
 type BidRepository interface {
+	GetHighestBid(ctx context.Context, id string) (*models.Bid, error)
+	GetBidById(ctx context.Context, id string) (*models.Bid, error)
+	GetBids(ctx context.Context, userId string) (*[]models.Bid, error)
+	CreateBid(ctx context.Context, bid *models.Bid) (*models.Bid, error)
+	GetAllBidderIDsForAuction(ctx context.Context, auctionID string) ([]string, error)
 }
 
 type PaymentRepository interface {
