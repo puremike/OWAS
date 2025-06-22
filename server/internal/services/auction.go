@@ -14,13 +14,16 @@ import (
 type AuctionService struct {
 	repo           store.AuctionRepository
 	bidRepo        store.BidRepository
+	notRepo        store.NotificationRepository
 	auctionUpdates chan<- *models.AuctionUpdateEvent
 	notifications  chan<- *models.NotificationEvent
 }
 
-func NewAuctionService(repo store.AuctionRepository, auctionUpdates chan<- *models.AuctionUpdateEvent, notifications chan<- *models.NotificationEvent) *AuctionService {
+func NewAuctionService(repo store.AuctionRepository, bidRepo store.BidRepository, notRepo store.NotificationRepository, auctionUpdates chan<- *models.AuctionUpdateEvent, notifications chan<- *models.NotificationEvent) *AuctionService {
 	return &AuctionService{
 		repo:           repo,
+		bidRepo:        bidRepo,
+		notRepo:        notRepo,
 		auctionUpdates: auctionUpdates,
 		notifications:  notifications,
 	}

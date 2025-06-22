@@ -316,7 +316,7 @@ func (a *AuctionHandler) GetAuctionById(c *gin.Context) {
 //	@Success		200	{array}		models.CreateAuctionResponse	"List of auctions"
 //	@Failure		401	{object}	gin.H							"Unauthorized - user not authenticated"
 //	@Failure		500	{object}	gin.H							"Internal Server Error - failed to retrieve auctions"
-//	@Router			/admin/auctions [get]
+//	@Router			/auctions [get]
 //
 //	@Security		jwtCookieAuth
 func (a *AuctionHandler) AdminGetAuctions(c *gin.Context) {

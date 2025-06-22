@@ -49,6 +49,10 @@ func (a *AuctionStore) CloseAuction(ctx context.Context, status, id string) erro
 		return err
 	}
 
+	if err = tx.Commit(); err != nil {
+		return err
+	}
+
 	return nil
 }
 

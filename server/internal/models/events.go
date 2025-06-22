@@ -38,7 +38,6 @@ type NotificationEvent struct {
 	Type      NotificationUpdateType `json:"type"`
 	ID        string                 `json:"id"`
 	UserID    string                 `json:"user_id"` // FK to User.ID
-	User      User                   `json:"user"`
 	Message   string                 `json:"message"`
 	AuctionID string                 `json:"auction_id"`
 	IsRead    bool                   `json:"is_read"`

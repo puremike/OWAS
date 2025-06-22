@@ -18,9 +18,13 @@ func Routes(app *config.Application) http.Handler {
 
 	userService := services.NewUserService(app.Store.Users, app)
 	userHandler := handlers.NewUserHandler(userService, app)
-	auctionService := services.NewAuctionService(app.Store.Auctions, app.WsHub.AuctionUpdates, app.WsHub.NotificationUpdates)
+	auctionService := services.NewAuctionService(app.Store.Auctions, app.Store.Bids, app.Store.Notifications, app.WsHub.AuctionUpdates, app.WsHub.NotificationUpdates)
 	auctionHandler := handlers.NewAuctionHandler(auctionService, app)
 	middleware := middlewares.NewMiddleware(app)
+
+	csService := services.NewCSService(app.Store.CS)
+	csHandler := handlers.NewCSHandler(csService)
+	g.POST("/contact-support", csHandler.ContactSupport)
 
 	api := g.Group("/api/v1")
 	{
@@ -44,13 +48,18 @@ func Routes(app *config.Application) http.Handler {
 		authGroup.PUT("/:username/change-password", userHandler.ChangePassword)
 
 		authGroup.GET("/admin/users", middlewares.AuthorizeRoles(true), userHandler.AdminGetUsers)
-		authGroup.GET("/admin/auctions", middlewares.AuthorizeRoles(true), auctionHandler.AdminGetAuctions)
+		authGroup.GET("/auctions", auctionHandler.AdminGetAuctions)
 		authGroup.DELETE("/admin/auctions/:auctionID", middleware.AuctionMiddleware(), middlewares.AuthorizeRoles(true), auctionHandler.AdminDeleteAuction)
 
 		authGroup.POST("/auctions", auctionHandler.CreateAuction)
 		authGroup.GET("/auctions/:auctionID", middleware.AuctionMiddleware(), auctionHandler.GetAuctionById)
 		authGroup.PUT("/auctions/:auctionID", middleware.AuctionMiddleware(), auctionHandler.UpdateAuction)
 		authGroup.DELETE("/auctions/:auctionID", middleware.AuctionMiddleware(), auctionHandler.DeleteAuction)
+
+		authGroup.POST("/auctions/:auctionID/bids", middleware.AuctionMiddleware(), auctionHandler.PlaceBids)
+		authGroup.POST("/auctions/:auctionID/close", middleware.AuctionMiddleware(), auctionHandler.CloseAuction)
+
+		authGroup.POST("/contact-support", csHandler.ContactSupport)
 	}
 
 	return g

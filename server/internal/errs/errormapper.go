@@ -191,6 +191,18 @@ func MapServiceErrors(c *gin.Context, err error) {
 		}
 		statusCode = http.StatusBadRequest
 
+	case errors.Is(err, ErrFailedToGetHighestBid):
+		apiError = APIError{
+			Message: err.Error(),
+		}
+		statusCode = http.StatusNotFound
+
+	case errors.Is(err, ErrNotificationNotFound):
+		apiError = APIError{
+			Message: err.Error(),
+		}
+		statusCode = http.StatusNotFound
+
 	default:
 		apiError = APIError{
 			Message: "an unexpected error occurred",

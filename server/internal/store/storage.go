@@ -41,6 +41,12 @@ type PaymentRepository interface {
 }
 
 type NotificationRepository interface {
+	CreateNotification(ctx context.Context, notification *Notification) error
+	GetNotifications(ctx context.Context, userID string) ([]*Notification, error)
+}
+
+type CSRepository interface {
+	ContactSupport(ctx context.Context, cs *models.ContactSupport) (*models.ContactSupport, error)
 }
 
 type Storage struct {
@@ -49,6 +55,7 @@ type Storage struct {
 	Bids          BidRepository
 	Payments      PaymentRepository
 	Notifications NotificationRepository
+	CS            CSRepository
 }
 
 func NewStorage(db *sql.DB) *Storage {
@@ -58,6 +65,7 @@ func NewStorage(db *sql.DB) *Storage {
 		Bids:          &BidStore{db},
 		Payments:      &PaymentStore{db},
 		Notifications: &NotificationStore{db},
+		CS:            &CSStore{db},
 	}
 }
 

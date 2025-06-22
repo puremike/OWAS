@@ -23,49 +23,6 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
-        "/admin/auctions": {
-            "get": {
-                "security": [
-                    {
-                        "jwtCookieAuth": []
-                    }
-                ],
-                "description": "Fetches a list of all auctions with admin privileges.",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Auctions"
-                ],
-                "summary": "Retrieve All Auctions (Admin)",
-                "responses": {
-                    "200": {
-                        "description": "List of auctions",
-                        "schema": {
-                            "type": "array",
-                            "items": {
-                                "$ref": "#/definitions/github_com_puremike_online_auction_api_internal_models.CreateAuctionResponse"
-                            }
-                        }
-                    },
-                    "401": {
-                        "description": "Unauthorized - user not authenticated",
-                        "schema": {
-                            "$ref": "#/definitions/gin.H"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error - failed to retrieve auctions",
-                        "schema": {
-                            "$ref": "#/definitions/gin.H"
-                        }
-                    }
-                }
-            }
-        },
         "/admin/auctions/{auctionID}": {
             "delete": {
                 "security": [
@@ -165,6 +122,47 @@ const docTemplate = `{
             }
         },
         "/auctions": {
+            "get": {
+                "security": [
+                    {
+                        "jwtCookieAuth": []
+                    }
+                ],
+                "description": "Fetches a list of all auctions with admin privileges.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Auctions"
+                ],
+                "summary": "Retrieve All Auctions (Admin)",
+                "responses": {
+                    "200": {
+                        "description": "List of auctions",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/github_com_puremike_online_auction_api_internal_models.CreateAuctionResponse"
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized - user not authenticated",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error - failed to retrieve auctions",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    }
+                }
+            },
             "post": {
                 "security": [
                     {
@@ -390,6 +388,188 @@ const docTemplate = `{
                     },
                     "500": {
                         "description": "Internal Server Error - failed to delete auction",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    }
+                }
+            }
+        },
+        "/auctions/{auctionID}/bids": {
+            "post": {
+                "security": [
+                    {
+                        "jwtCookieAuth": []
+                    }
+                ],
+                "description": "Allows a user to place a bid on an existing auction.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Bids"
+                ],
+                "summary": "Place a Bid",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "ID of the auction to bid on",
+                        "name": "auctionID",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Bid request payload",
+                        "name": "payload",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/internal_handlers.PlaceBidRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Bid placed successfully",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_puremike_online_auction_api_internal_models.BidResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request - invalid input",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized - user not authenticated or authorized",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    },
+                    "404": {
+                        "description": "NotFound - auction not found",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error - failed to place bid",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    }
+                }
+            }
+        },
+        "/auctions/{auctionID}/close": {
+            "post": {
+                "security": [
+                    {
+                        "jwtCookieAuth": []
+                    }
+                ],
+                "description": "Allows the seller of an auction to close the auction. The auction must be open.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Auctions"
+                ],
+                "summary": "Close Auction",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "ID of the auction to close",
+                        "name": "auctionID",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Closed auction message",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized - user not authenticated or not the seller",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    },
+                    "404": {
+                        "description": "Auction not found",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error - failed to close auction",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    }
+                }
+            }
+        },
+        "/contact-support": {
+            "post": {
+                "security": [
+                    {
+                        "jwtCookieAuth": []
+                    }
+                ],
+                "description": "Send a message to the support team",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Contact Support"
+                ],
+                "summary": "Contact Support",
+                "parameters": [
+                    {
+                        "description": "Contact Support payload",
+                        "name": "payload",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/github_com_puremike_online_auction_api_internal_models.ContactSupportReq"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_puremike_online_auction_api_internal_models.SupportRes"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request - invalid input",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized - user not authenticated",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error - failed to contact support",
                         "schema": {
                             "$ref": "#/definitions/gin.H"
                         }
@@ -807,6 +987,34 @@ const docTemplate = `{
                 }
             }
         },
+        "github_com_puremike_online_auction_api_internal_models.BidResponse": {
+            "type": "object",
+            "properties": {
+                "amount": {
+                    "type": "number"
+                },
+                "auction_id": {
+                    "type": "string"
+                },
+                "bidder_id": {
+                    "type": "string"
+                },
+                "created_at": {
+                    "type": "string"
+                }
+            }
+        },
+        "github_com_puremike_online_auction_api_internal_models.ContactSupportReq": {
+            "type": "object",
+            "properties": {
+                "message": {
+                    "type": "string"
+                },
+                "subject": {
+                    "type": "string"
+                }
+            }
+        },
         "github_com_puremike_online_auction_api_internal_models.CreateAuctionRequest": {
             "type": "object",
             "required": [
@@ -825,7 +1033,6 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "start_time": {
-                    "description": "Status        string    ` + "`" + `json:\"status\" binding:\"required,oneof=open closed\"` + "`" + `",
                     "type": "string"
                 },
                 "starting_price": {
@@ -836,7 +1043,6 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "type": {
-                    "description": "CurrentPrice  float64   ` + "`" + `json:\"current_price\" binding:\"required,gte=1\"` + "`" + `",
                     "type": "string",
                     "enum": [
                         "english",
@@ -955,6 +1161,23 @@ const docTemplate = `{
                 }
             }
         },
+        "github_com_puremike_online_auction_api_internal_models.SupportRes": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "integer"
+                },
+                "message": {
+                    "type": "string"
+                },
+                "subject": {
+                    "type": "string"
+                },
+                "user_id": {
+                    "type": "string"
+                }
+            }
+        },
         "github_com_puremike_online_auction_api_internal_models.UserProfileUpdateRequest": {
             "type": "object",
             "required": [
@@ -1004,6 +1227,17 @@ const docTemplate = `{
                 },
                 "username": {
                     "type": "string"
+                }
+            }
+        },
+        "internal_handlers.PlaceBidRequest": {
+            "type": "object",
+            "required": [
+                "bidAmount"
+            ],
+            "properties": {
+                "bidAmount": {
+                    "type": "number"
                 }
             }
         },

@@ -5,10 +5,12 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"log"
 	"time"
 
 	"github.com/puremike/online_auction_api/internal/errs"
 	"github.com/puremike/online_auction_api/internal/models"
+	"github.com/puremike/online_auction_api/internal/store"
 )
 
 // PlaceBid is a method in your AuctionService
@@ -37,8 +39,13 @@ func (a *AuctionService) PlaceBid(ctx context.Context, req *models.PlaceBidReque
 	}
 	// 3. Retrieve the previous highest bid
 	previousBid, err := a.bidRepo.GetHighestBid(ctx, req.AuctionID)
-	if err != nil && !errors.Is(err, errs.ErrBidNotFound) {
-		return nil, errs.ErrBidNotFound
+	if err != nil {
+		if errors.Is(err, errs.ErrBidNotFound) {
+			previousBid = nil
+		} else {
+			log.Printf("GetHighestBid failed: %v", err)
+			return nil, errs.ErrFailedToGetHighestBid
+		}
 	}
 
 	previousHighestBidderID := ""
@@ -74,6 +81,15 @@ func (a *AuctionService) PlaceBid(ctx context.Context, req *models.PlaceBidReque
 		TimeStamp:    time.Now(),
 	}
 
+	not := &store.Notification{
+		UserID:  req.BidderID,
+		Message: fmt.Sprintf("You have placed a bid on auction: %s, auctionId: %s", auction.Title, req.AuctionID),
+		IsRead:  false,
+	}
+	if err := a.notRepo.CreateNotification(ctx, not); err != nil {
+		return nil, fmt.Errorf("CreateNotification failed: %v", err)
+	}
+
 	// 7. Notify previous highest bidder (if different)
 	if previousHighestBidderID != "" && previousHighestBidderID != req.BidderID {
 		a.notifications <- &models.NotificationEvent{
@@ -82,6 +98,15 @@ func (a *AuctionService) PlaceBid(ctx context.Context, req *models.PlaceBidReque
 			Message:   fmt.Sprintf("You have been outbid on auction: %s", auction.Title),
 			AuctionID: req.AuctionID,
 			TimeStamp: time.Now(),
+		}
+
+		not := &store.Notification{
+			UserID:  previousHighestBidderID,
+			Message: fmt.Sprintf("You have been outbid on auction: %s, auctionId: %s", auction.Title, req.AuctionID),
+			IsRead:  false,
+		}
+		if err := a.notRepo.CreateNotification(ctx, not); err != nil {
+			return nil, fmt.Errorf("CreateNotification failed: %v", err)
 		}
 	}
 
@@ -142,6 +167,15 @@ func (a *AuctionService) CloseAuction(ctx context.Context, auctionID string, req
 			AuctionID: auctionID,
 			TimeStamp: time.Now(),
 		}
+
+		not := &store.Notification{
+			UserID:  winnerID,
+			Message: fmt.Sprintf("Congratulations! You won the auction: %s, auctionId: %s", auction.Title, auctionID),
+			IsRead:  false,
+		}
+		if err := a.notRepo.CreateNotification(ctx, not); err != nil {
+			return fmt.Errorf("CreateNotification failed: %v", err)
+		}
 	}
 
 	// Notify other bidders
@@ -163,6 +197,15 @@ func (a *AuctionService) CloseAuction(ctx context.Context, auctionID string, req
 					TimeStamp: time.Now(),
 				}
 			}
+		}
+
+		not := &store.Notification{
+			UserID:  id,
+			Message: fmt.Sprintf("Auction %s has ended. You did not win.", auction.Title),
+			IsRead:  false,
+		}
+		if err := a.notRepo.CreateNotification(ctx, not); err != nil {
+			return fmt.Errorf("CreateNotification failed: %v", err)
 		}
 	}
 

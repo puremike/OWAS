@@ -16,7 +16,7 @@ func (b *BidStore) CreateBid(ctx context.Context, bid *models.Bid) (*models.Bid,
 	ctx, cancel := context.WithTimeout(ctx, QueryBackgroundTimeout)
 	defer cancel()
 
-	query := `INSERT INTO bids (id, auction_id, bidder_id, amount) VALUES ($1, $2, $3, $4, $5) RETURNING id, auction_id, bidder_id, amount, created_at`
+	query := `INSERT INTO bid (auction_id, bidder_id, amount) VALUES ($1, $2, $3) RETURNING id, auction_id, bidder_id, amount, created_at`
 
 	tx, err := b.db.BeginTx(ctx, nil)
 	if err != nil {
@@ -25,7 +25,7 @@ func (b *BidStore) CreateBid(ctx context.Context, bid *models.Bid) (*models.Bid,
 
 	defer tx.Rollback()
 
-	if err = tx.QueryRowContext(ctx, query, bid.ID, bid.AuctionID, bid.BidderID, bid.Amount).Scan(&bid.ID, &bid.AuctionID, &bid.BidderID, &bid.Amount, &bid.CreatedAt); err != nil {
+	if err = tx.QueryRowContext(ctx, query, bid.AuctionID, bid.BidderID, bid.Amount).Scan(&bid.ID, &bid.AuctionID, &bid.BidderID, &bid.Amount, &bid.CreatedAt); err != nil {
 		return nil, err
 	}
 
@@ -43,7 +43,7 @@ func (b *BidStore) GetBids(ctx context.Context, userId string) (*[]models.Bid, e
 
 	var bids []models.Bid
 
-	query := `SELECT id, auction_id, user_id, amount, created_at FROM bids WHERE user_id = $1`
+	query := `SELECT id, auction_id, user_id, amount, created_at FROM bid WHERE user_id = $1`
 
 	rows, err := b.db.QueryContext(ctx, query, userId)
 	if err != nil {
@@ -71,10 +71,13 @@ func (b *BidStore) GetBids(ctx context.Context, userId string) (*[]models.Bid, e
 }
 
 func (b *BidStore) GetHighestBid(ctx context.Context, id string) (*models.Bid, error) {
-	query := `SELECT id, auction_id, bidder_id, amount, created_at FROM bids WHERE auction_id = $1 ORDER BY amount DESC LIMIT 1`
+	query := `SELECT id, auction_id, bidder_id, amount, created_at FROM bid WHERE auction_id = $1 ORDER BY amount DESC LIMIT 1`
 	var bid models.Bid
 	err := b.db.QueryRowContext(ctx, query, id).Scan(&bid.ID, &bid.AuctionID, &bid.BidderID, &bid.Amount, &bid.CreatedAt)
 	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, errs.ErrBidNotFound
+		}
 		return nil, err
 	}
 	return &bid, nil
@@ -87,7 +90,7 @@ func (b *BidStore) GetBidById(ctx context.Context, id string) (*models.Bid, erro
 
 	bid := &models.Bid{}
 
-	query := `SELECT id, auction_id, user_id, amount, created_at FROM bids WHERE id = $1`
+	query := `SELECT id, auction_id, user_id, amount, created_at FROM bid WHERE id = $1`
 
 	if err := b.db.QueryRowContext(ctx, query, id).Scan(&bid.ID, &bid.AuctionID, &bid.BidderID, &bid.Amount, &bid.CreatedAt); err != nil {
 		if err == sql.ErrNoRows {
@@ -100,7 +103,7 @@ func (b *BidStore) GetBidById(ctx context.Context, id string) (*models.Bid, erro
 }
 
 func (b *BidStore) GetAllBidderIDsForAuction(ctx context.Context, id string) ([]string, error) {
-	query := `SELECT DISTINCT bidder_id FROM bids WHERE auction_id = $1`
+	query := `SELECT DISTINCT bidder_id FROM bid WHERE auction_id = $1`
 	rows, err := b.db.QueryContext(ctx, query, id)
 	if err != nil {
 		return nil, err

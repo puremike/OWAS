@@ -35,4 +35,6 @@ var (
 	ErrPermissionDenied      = errors.New("permission denied")
 	ErrAuctionAlreadyClosed  = errors.New("auction is already closed")
 	ErrFailedToSaveBid       = errors.New("failed to save bid")
+	ErrFailedToGetHighestBid = errors.New("failed to get highest bid")
+	ErrNotificationNotFound  = errors.New("notification not found")
 )
