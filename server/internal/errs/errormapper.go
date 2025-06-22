@@ -203,6 +203,36 @@ func MapServiceErrors(c *gin.Context, err error) {
 		}
 		statusCode = http.StatusNotFound
 
+	case errors.Is(err, ErrDutchBidMustMatchCurrent):
+		apiError = APIError{
+			Message: err.Error(),
+		}
+		statusCode = http.StatusBadRequest
+
+	case errors.Is(err, ErrDutchAuctionAlreadyWon):
+		apiError = APIError{
+			Message: err.Error(),
+		}
+		statusCode = http.StatusBadRequest
+
+	case errors.Is(err, ErrDuplicateSealedBid):
+		apiError = APIError{
+			Message: err.Error(),
+		}
+		statusCode = http.StatusBadRequest
+
+	case errors.Is(err, ErrFailedToDeleteBids):
+		apiError = APIError{
+			Message: err.Error(),
+		}
+		statusCode = http.StatusBadRequest
+
+	case errors.Is(err, ErrFailedToDeleteNotifications):
+		apiError = APIError{
+			Message: err.Error(),
+		}
+		statusCode = http.StatusBadRequest
+
 	default:
 		apiError = APIError{
 			Message: "an unexpected error occurred",

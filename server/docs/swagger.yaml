@@ -46,9 +46,16 @@ definitions:
   github_com_puremike_online_auction_api_internal_models.ContactSupportReq:
     properties:
       message:
+        maxLength: 1000
+        minLength: 1
         type: string
       subject:
+        maxLength: 100
+        minLength: 1
         type: string
+    required:
+    - message
+    - subject
     type: object
   github_com_puremike_online_auction_api_internal_models.CreateAuctionRequest:
     properties:

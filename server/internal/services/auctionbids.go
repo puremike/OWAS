@@ -15,7 +15,6 @@ import (
 
 // PlaceBid is a method in your AuctionService
 func (a *AuctionService) PlaceBid(ctx context.Context, req *models.PlaceBidRequest) (*models.BidResponse, error) {
-	// 1. Retrieve the auction from the database
 	auction, err := a.repo.GetAuctionById(ctx, req.AuctionID)
 	if err != nil {
 		if errors.Is(err, errs.ErrAuctionNotFound) {
@@ -24,20 +23,47 @@ func (a *AuctionService) PlaceBid(ctx context.Context, req *models.PlaceBidReque
 		return nil, errors.New("failed to retrieve auction for bidding")
 	}
 
-	// Basic Validation:
 	if auction.Status != "open" {
 		return nil, errs.ErrAuctionNotOpenForBids
-	}
-	if req.BidAmount <= auction.CurrentPrice {
-		return nil, errs.ErrBidTooLow
-	}
-	if req.BidAmount <= auction.StartingPrice && auction.CurrentPrice == auction.StartingPrice {
-		return nil, errs.ErrBidTooLow
 	}
 	if req.BidderID == auction.SellerID {
 		return nil, errs.ErrBidBySeller
 	}
-	// 3. Retrieve the previous highest bid
+
+	switch auction.Type {
+	case models.EnglishAuction:
+		if req.BidAmount <= auction.CurrentPrice {
+			return nil, errs.ErrBidTooLow
+		}
+
+	case models.DutchAuction:
+		// Only allow ONE bid, exactly at the current price
+		if auction.CurrentPrice != req.BidAmount {
+			return nil, errs.ErrDutchBidMustMatchCurrent
+		}
+
+		// Optional: prevent duplicate bids if auction is already won
+		existingBid, err := a.bidRepo.GetHighestBid(ctx, req.AuctionID)
+		if err == nil && existingBid != nil {
+			return nil, errs.ErrDutchAuctionAlreadyWon
+		}
+
+	// case "sealed":
+	// 	// ✅ Allow any amount >= starting price
+	// 	if req.BidAmount < auction.StartingPrice {
+	// 		return nil, errs.ErrBidTooLow
+	// 	}
+	// 	// Prevent duplicate bids from same user
+	// 	existing, _ := a.bidRepo.GetBidByUser(ctx, req.AuctionID, req.BidderID)
+	// 	if existing != nil {
+	// 		return nil, errs.ErrDuplicateSealedBid
+	// 	}
+
+	default:
+		return nil, errors.New("unknown auction type")
+	}
+
+	// Retrieve the previous highest bid
 	previousBid, err := a.bidRepo.GetHighestBid(ctx, req.AuctionID)
 	if err != nil {
 		if errors.Is(err, errs.ErrBidNotFound) {
@@ -54,7 +80,7 @@ func (a *AuctionService) PlaceBid(ctx context.Context, req *models.PlaceBidReque
 		previousHighestBidderID = previousBid.BidderID
 	}
 
-	// 4. Create bid
+	// Same for both types:
 	newBid := &models.Bid{
 		AuctionID: req.AuctionID,
 		BidderID:  req.BidderID,
@@ -66,32 +92,41 @@ func (a *AuctionService) PlaceBid(ctx context.Context, req *models.PlaceBidReque
 		return nil, errs.ErrFailedToSaveBid
 	}
 
-	// 5. Update auction with new current price
 	auction.CurrentPrice = req.BidAmount
+
+	// Close the auction immediately for Dutch
+	if auction.Type == models.DutchAuction {
+		auction.Status = "closed"
+	}
+
 	if err := a.repo.UpdateAuction(ctx, auction, req.AuctionID); err != nil {
 		return nil, errs.ErrFailedToUpdateAuction
 	}
 
-	// 6. Notify WebSocket listeners
+	// WebSocket broadcast
 	a.auctionUpdates <- &models.AuctionUpdateEvent{
 		EventType:    models.AuctionNewBid,
 		ID:           req.AuctionID,
 		CurrentPrice: req.BidAmount,
 		SellerID:     req.BidderID,
+		Status:       auction.Status,
+		Type:         auction.Type,
 		TimeStamp:    time.Now(),
 	}
 
+	// Notification to bidder
 	not := &store.Notification{
-		UserID:  req.BidderID,
-		Message: fmt.Sprintf("You have placed a bid on auction: %s, auctionId: %s", auction.Title, req.AuctionID),
-		IsRead:  false,
+		UserID:    req.BidderID,
+		Message:   fmt.Sprintf("You have placed a bid on auction: %s, auctionId: %s", auction.Title, req.AuctionID),
+		AuctionID: req.AuctionID,
+		IsRead:    false,
 	}
 	if err := a.notRepo.CreateNotification(ctx, not); err != nil {
 		return nil, fmt.Errorf("CreateNotification failed: %v", err)
 	}
 
-	// 7. Notify previous highest bidder (if different)
-	if previousHighestBidderID != "" && previousHighestBidderID != req.BidderID {
+	// Only notify previous bidder if English type
+	if auction.Type == models.EnglishAuction && previousHighestBidderID != "" && previousHighestBidderID != req.BidderID {
 		a.notifications <- &models.NotificationEvent{
 			Type:      models.NotificationOutBid,
 			UserID:    previousHighestBidderID,
@@ -99,18 +134,17 @@ func (a *AuctionService) PlaceBid(ctx context.Context, req *models.PlaceBidReque
 			AuctionID: req.AuctionID,
 			TimeStamp: time.Now(),
 		}
-
 		not := &store.Notification{
-			UserID:  previousHighestBidderID,
-			Message: fmt.Sprintf("You have been outbid on auction: %s, auctionId: %s", auction.Title, req.AuctionID),
-			IsRead:  false,
+			UserID:    previousBid.BidderID,
+			Message:   fmt.Sprintf("You have been outbid on auction: %s, auctionId: %s", auction.Title, req.AuctionID),
+			AuctionID: req.AuctionID,
+			IsRead:    false,
 		}
 		if err := a.notRepo.CreateNotification(ctx, not); err != nil {
 			return nil, fmt.Errorf("CreateNotification failed: %v", err)
 		}
 	}
 
-	// 8. Return response
 	return &models.BidResponse{
 		AuctionID: req.AuctionID,
 		BidderID:  req.BidderID,
@@ -169,9 +203,10 @@ func (a *AuctionService) CloseAuction(ctx context.Context, auctionID string, req
 		}
 
 		not := &store.Notification{
-			UserID:  winnerID,
-			Message: fmt.Sprintf("Congratulations! You won the auction: %s, auctionId: %s", auction.Title, auctionID),
-			IsRead:  false,
+			UserID:    winnerID,
+			Message:   fmt.Sprintf("Congratulations! You won the auction: %s, auctionId: %s", auction.Title, auctionID),
+			AuctionID: auctionID,
+			IsRead:    false,
 		}
 		if err := a.notRepo.CreateNotification(ctx, not); err != nil {
 			return fmt.Errorf("CreateNotification failed: %v", err)
@@ -190,7 +225,7 @@ func (a *AuctionService) CloseAuction(ctx context.Context, auctionID string, req
 			if _, seen := uniqueBidders[id]; !seen {
 				uniqueBidders[id] = struct{}{}
 				a.notifications <- &models.NotificationEvent{
-					Type:      models.NotificationWon,
+					Type:      models.NotificationAuctionEnded,
 					UserID:    id,
 					Message:   fmt.Sprintf("Auction %s has ended. You did not win.", auction.Title),
 					AuctionID: auctionID,
@@ -200,9 +235,10 @@ func (a *AuctionService) CloseAuction(ctx context.Context, auctionID string, req
 		}
 
 		not := &store.Notification{
-			UserID:  id,
-			Message: fmt.Sprintf("Auction %s has ended. You did not win.", auction.Title),
-			IsRead:  false,
+			UserID:    id,
+			Message:   fmt.Sprintf("Auction %s has ended. You did not win.", auction.Title),
+			AuctionID: auctionID,
+			IsRead:    false,
 		}
 		if err := a.notRepo.CreateNotification(ctx, not); err != nil {
 			return fmt.Errorf("CreateNotification failed: %v", err)
@@ -211,10 +247,23 @@ func (a *AuctionService) CloseAuction(ctx context.Context, auctionID string, req
 
 	// Notify WebSocket listeners
 	a.auctionUpdates <- &models.AuctionUpdateEvent{
-		EventType: models.AuctionEnded,
-		ID:        auctionID,
-		Status:    "closed",
-		TimeStamp: time.Now(),
+		EventType:    models.AuctionEnded,
+		ID:           auctionID,
+		Type:         auction.Type,
+		Status:       auction.Status,
+		SellerID:     auction.SellerID,
+		CurrentPrice: auction.CurrentPrice,
+		TimeStamp:    time.Now(),
+	}
+
+	// Delete bids
+	if err := a.bidRepo.DeleteBidsByAuction(ctx, auctionID); err != nil {
+		return errs.ErrFailedToDeleteBids
+	}
+
+	// Delete notifications
+	if err := a.notRepo.DeleteNotificationByAuction(ctx, auctionID); err != nil {
+		return errs.ErrFailedToDeleteNotifications
 	}
 
 	return nil

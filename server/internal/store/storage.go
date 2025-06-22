@@ -35,6 +35,8 @@ type BidRepository interface {
 	GetBids(ctx context.Context, userId string) (*[]models.Bid, error)
 	CreateBid(ctx context.Context, bid *models.Bid) (*models.Bid, error)
 	GetAllBidderIDsForAuction(ctx context.Context, auctionID string) ([]string, error)
+	GetBidByUser(ctx context.Context, auctionID, bidderID string) (*models.Bid, error)
+	DeleteBidsByAuction(ctx context.Context, auctionID string) error
 }
 
 type PaymentRepository interface {
@@ -43,6 +45,7 @@ type PaymentRepository interface {
 type NotificationRepository interface {
 	CreateNotification(ctx context.Context, notification *Notification) error
 	GetNotifications(ctx context.Context, userID string) ([]*Notification, error)
+	DeleteNotificationByAuction(ctx context.Context, auctionID string) error
 }
 
 type CSRepository interface {

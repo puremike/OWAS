@@ -6,10 +6,11 @@ import (
 )
 
 type Notification struct {
-	ID      string `json:"id"`
-	UserID  string `json:"user_id"`
-	Message string `json:"message"`
-	IsRead  bool   `json:"is_read"`
+	ID        string `json:"id"`
+	UserID    string `json:"user_id"`
+	Message   string `json:"message"`
+	AuctionID string `json:"auction_id"`
+	IsRead    bool   `json:"is_read"`
 }
 
 type NotificationStore struct {
@@ -21,7 +22,7 @@ func (n *NotificationStore) CreateNotification(ctx context.Context, notification
 	ctx, cancel := context.WithTimeout(ctx, QueryBackgroundTimeout)
 	defer cancel()
 
-	query := `INSERT INTO notification (user_id, message, is_read) VALUES ($1, $2, $3)`
+	query := `INSERT INTO notification (user_id, message, auction_id, is_read) VALUES ($1, $2, $3, $4)`
 
 	tx, err := n.db.BeginTx(ctx, nil)
 	if err != nil {
@@ -30,7 +31,7 @@ func (n *NotificationStore) CreateNotification(ctx context.Context, notification
 
 	defer tx.Rollback()
 
-	if _, err := tx.ExecContext(ctx, query, notification.UserID, notification.Message, notification.IsRead); err != nil {
+	if _, err := tx.ExecContext(ctx, query, notification.UserID, notification.Message, notification.AuctionID, notification.IsRead); err != nil {
 		return err
 	}
 
@@ -47,7 +48,7 @@ func (n *NotificationStore) GetNotifications(ctx context.Context, userID string)
 
 	var notifications []*Notification
 
-	query := `SELECT id, user_id, message FROM notification WHERE user_id = $1`
+	query := `SELECT id, user_id, auction_id, message FROM notification WHERE user_id = $1`
 
 	rows, err := n.db.QueryContext(ctx, query, userID)
 	if err != nil {
@@ -58,7 +59,7 @@ func (n *NotificationStore) GetNotifications(ctx context.Context, userID string)
 
 	for rows.Next() {
 		not := &Notification{}
-		if err := rows.Scan(&not.ID, &not.UserID, &not.Message); err != nil {
+		if err := rows.Scan(&not.ID, &not.UserID, &not.AuctionID, &not.Message); err != nil {
 			return nil, err
 		}
 		notifications = append(notifications, not)
@@ -69,4 +70,25 @@ func (n *NotificationStore) GetNotifications(ctx context.Context, userID string)
 	}
 
 	return notifications, nil
+}
+
+func (n *NotificationStore) DeleteNotificationByAuction(ctx context.Context, auctionID string) error {
+	query := `DELETE FROM notification WHERE auction_id = $1`
+
+	tx, err := n.db.BeginTx(ctx, nil)
+	if err != nil {
+		return err
+	}
+
+	defer tx.Rollback()
+
+	if _, err = n.db.ExecContext(ctx, query, auctionID); err != nil {
+		return err
+	}
+
+	if err = tx.Commit(); err != nil {
+		return err
+	}
+
+	return nil
 }

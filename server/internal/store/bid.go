@@ -102,6 +102,20 @@ func (b *BidStore) GetBidById(ctx context.Context, id string) (*models.Bid, erro
 	return bid, nil
 }
 
+func (b *BidStore) GetBidByUser(ctx context.Context, auctionID, bidderID string) (*models.Bid, error) {
+
+	query := `SELECT * FROM bid WHERE auction_id = $1 AND bidder_id = $2 LIMIT 1`
+
+	bid := &models.Bid{}
+	if err := b.db.QueryRowContext(ctx, query, auctionID, bidderID).Scan(&bid.ID, &bid.AuctionID, &bid.BidderID, &bid.Amount, &bid.CreatedAt); err != nil {
+		if err == sql.ErrNoRows {
+			return nil, errs.ErrBidNotFound
+		}
+		return nil, err
+	}
+	return bid, nil
+}
+
 func (b *BidStore) GetAllBidderIDsForAuction(ctx context.Context, id string) ([]string, error) {
 	query := `SELECT DISTINCT bidder_id FROM bid WHERE auction_id = $1`
 	rows, err := b.db.QueryContext(ctx, query, id)
@@ -119,4 +133,25 @@ func (b *BidStore) GetAllBidderIDsForAuction(ctx context.Context, id string) ([]
 		bidders = append(bidders, id)
 	}
 	return bidders, nil
+}
+
+func (b *BidStore) DeleteBidsByAuction(ctx context.Context, auctionID string) error {
+	query := `DELETE FROM bid WHERE auction_id = $1`
+
+	tx, err := b.db.BeginTx(ctx, nil)
+	if err != nil {
+		return err
+	}
+
+	defer tx.Rollback()
+
+	if _, err = b.db.ExecContext(ctx, query, auctionID); err != nil {
+		return err
+	}
+
+	if err = tx.Commit(); err != nil {
+		return err
+	}
+
+	return nil
 }

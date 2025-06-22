@@ -27,10 +27,20 @@ func (m *Middeware) AuthMiddleware() gin.HandlerFunc {
 
 		var tokenString string
 
-		tokenString, err := c.Cookie("jwt")
+		isWebSocketUpgrade := strings.ToLower(c.GetHeader("Upgrade")) == "websocket"
+		if isWebSocketUpgrade {
+			queryToken := c.Query("token")
+			if queryToken != "" {
+				tokenString = queryToken
+			}
+		}
 
-		if err != nil || tokenString == "" {
+		cookieToken, err := c.Cookie("jwt")
+		if err == nil && cookieToken != "" {
+			tokenString = cookieToken
+		}
 
+		if tokenString == "" {
 			authHeader := c.GetHeader("Authorization")
 
 			if authHeader == "" {
@@ -47,6 +57,12 @@ func (m *Middeware) AuthMiddleware() gin.HandlerFunc {
 			}
 
 			tokenString = strings.TrimSpace(parts[1])
+		}
+
+		if tokenString == "" {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "Authentication token missing"})
+			c.Abort()
+			return
 		}
 
 		jwtToken, err := m.app.JwtAUth.ValidateToken(tokenString)

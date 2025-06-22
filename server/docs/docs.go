@@ -1006,12 +1006,20 @@ const docTemplate = `{
         },
         "github_com_puremike_online_auction_api_internal_models.ContactSupportReq": {
             "type": "object",
+            "required": [
+                "message",
+                "subject"
+            ],
             "properties": {
                 "message": {
-                    "type": "string"
+                    "type": "string",
+                    "maxLength": 1000,
+                    "minLength": 1
                 },
                 "subject": {
-                    "type": "string"
+                    "type": "string",
+                    "maxLength": 100,
+                    "minLength": 1
                 }
             }
         },

@@ -38,7 +38,7 @@ func (ws *WSHandler) ServeWs(c *gin.Context) {
 	authUser, err := contexts.GetUserFromContext(c)
 	if err != nil {
 		log.Printf("websocket upgrade failed: user not authenticated: %v", err)
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+		c.Writer.WriteHeader(http.StatusUnauthorized)
 		return
 	}
 

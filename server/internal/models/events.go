@@ -31,15 +31,19 @@ const (
 	NotificationOutBid       NotificationUpdateType = "OUTBID"
 	NotificationWon          NotificationUpdateType = "AUCTION_WON"
 	NotificationReminder     NotificationUpdateType = "REMINDER"
-	MotificationAuctionEnded NotificationUpdateType = "AUCTION_ENDED"
+	NotificationAuctionEnded NotificationUpdateType = "AUCTION_ENDED"
 )
 
 type NotificationEvent struct {
 	Type      NotificationUpdateType `json:"type"`
-	ID        string                 `json:"id"`
 	UserID    string                 `json:"user_id"` // FK to User.ID
 	Message   string                 `json:"message"`
 	AuctionID string                 `json:"auction_id"`
-	IsRead    bool                   `json:"is_read"`
 	TimeStamp time.Time              `json:"created_at"`
 }
+
+const (
+	EnglishAuction = "english"
+	DutchAuction   = "dutch"
+	SealedAuction  = "sealed"
+)

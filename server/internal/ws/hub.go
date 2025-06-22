@@ -82,7 +82,7 @@ func (h *Hub) Run() {
 			}
 
 		case notificationUpdates := <-h.NotificationUpdates:
-			log.Printf("Received notification update for NotificationID: %s", notificationUpdates.ID)
+			log.Printf("Received notification update for UserID: %s, Message: %s", notificationUpdates.UserID, notificationUpdates.Message)
 
 			jsonData, err := json.Marshal(notificationUpdates)
 			if err != nil {
