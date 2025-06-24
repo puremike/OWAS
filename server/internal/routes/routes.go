@@ -29,19 +29,24 @@ func Routes(app *config.Application) http.Handler {
 	csHandler := handlers.NewCSHandler(csService)
 
 	wsHandler := ws.NewWSHandler(app.WsHub)
-	g.POST("/contact-support", csHandler.ContactSupport)
 
 	api := g.Group("/api/v1")
+	api.Use(middleware.RateLimiterMiddleware(app.GeneralRateLimiter))
 	{
 		api.GET("swagger/*any", ginSwagger.WrapHandler(swaggerfiles.Handler))
-		api.GET("/health", handlers.Health)
+		api.GET("/health", middleware.RateLimiterMiddleware(app.HeavyOpsRateLimiter), handlers.Health)
+		api.GET("/checking", func(c *gin.Context) {
+			c.JSON(http.StatusOK, gin.H{
+				"message": "checking",
+			})
+		})
 	}
 
 	user := api.Group("/")
 	{
 		user.POST("/signup", userHandler.RegisterUser)
-		user.POST("/login", userHandler.Login)
-		user.POST("/refresh", userHandler.RefreshToken)
+		user.POST("/login", middleware.RateLimiterMiddleware(app.HeavyOpsRateLimiter), userHandler.Login)
+		user.POST("/refresh", middleware.RateLimiterMiddleware(app.SensitiveRateLimiter), userHandler.RefreshToken)
 	}
 
 	authGroup := api.Group("/")

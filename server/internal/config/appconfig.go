@@ -4,24 +4,40 @@ import (
 	"time"
 
 	"github.com/puremike/online_auction_api/internal/auth"
+	"github.com/puremike/online_auction_api/internal/ratelimiters"
 	"github.com/puremike/online_auction_api/internal/store"
 	"github.com/puremike/online_auction_api/internal/ws"
 	"go.uber.org/zap"
 )
 
 type Application struct {
-	AppConfig AppConfig
+	AppConfig *AppConfig
 	Logger    *zap.SugaredLogger
 	JwtAUth   *auth.JWTAuthenticator
 	Store     *store.Storage
 	WsHub     *ws.Hub
+	// RateLimiter *ratelimiters.HybridLimiter
+	GeneralRateLimiter   ratelimiters.Limiter
+	SensitiveRateLimiter ratelimiters.Limiter
+	HeavyOpsRateLimiter  ratelimiters.Limiter
 }
 
 type AppConfig struct {
-	Port       string
-	Env        string
-	DbConfig   DbConfig
-	AuthConfig AuthConfig
+	Port        string
+	Env         string
+	DbConfig    DbConfig
+	AuthConfig  AuthConfig
+	GeneralRL   RateLimiterConf
+	SensitiveRL RateLimiterConf
+	HeavyOpsRL  RateLimiterConf
+}
+
+type RateLimiterConf struct {
+	Window   time.Duration
+	Limit    int
+	Rate     float64
+	Capacity float64
+	Enabled  bool
 }
 
 type DbConfig struct {

@@ -39,3 +39,21 @@ func GetEnvTDuration(key string, defaultValue time.Duration) time.Duration {
 	}
 	return defaultValue
 }
+
+func GetEnvBool(key string, defaultValue bool) bool {
+	if value, exists := os.LookupEnv(key); exists {
+		if valueBool, err := strconv.ParseBool(value); err == nil {
+			return valueBool
+		}
+	}
+	return defaultValue
+}
+
+func GetEnvFloat(key string, defaultValue float64) float64 {
+	if value, exists := os.LookupEnv(key); exists {
+		if valueFloat, err := strconv.ParseFloat(value, 64); err == nil {
+			return valueFloat
+		}
+	}
+	return defaultValue
+}

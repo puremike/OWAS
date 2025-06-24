@@ -1,8 +1,6 @@
 package main
 
 import (
-	"time"
-
 	_ "github.com/lib/pq"
 	"github.com/puremike/online_auction_api/docs"
 	"github.com/puremike/online_auction_api/internal/auth"
@@ -11,7 +9,6 @@ import (
 	"github.com/puremike/online_auction_api/internal/routes"
 	"github.com/puremike/online_auction_api/internal/store"
 	"github.com/puremike/online_auction_api/internal/ws"
-	"github.com/puremike/online_auction_api/pkg"
 	"go.uber.org/zap"
 )
 
@@ -47,23 +44,8 @@ func main() {
 
 	docs.SwaggerInfo.BasePath = "/api/v1"
 
-	cfg := config.AppConfig{
-		Port: pkg.GetEnvString("PORT", "8080"),
-		Env:  pkg.GetEnvString("ENV", "development"),
-		DbConfig: config.DbConfig{
-			Db_addr:          pkg.GetEnvString("DB_ADDR", "postgres://user:userpassword@localhost:5432/OWAS?sslmode=disable"),
-			MaxIdleConns:     pkg.GetEnvInt("DB_MAX_IDLE_CONNS", 5),
-			MaxOpenConns:     pkg.GetEnvInt("DB_MAX_OPEN_CONNS", 50),
-			ConnsMaxIdleTime: pkg.GetEnvTDuration("DB_CONNS_MAX_IDLE_TIME", 30*time.Minute),
-		},
-		AuthConfig: config.AuthConfig{
-			Aud:             pkg.GetEnvString("JWT_AUD", "OWAS"),
-			Iss:             pkg.GetEnvString("JWT_ISS", "OWAS"),
-			Secret:          pkg.GetEnvString("JWT_SECRET", "cb02ad3d42d1818c330c8a3d78f88d2b613b75cd99e56cf2182b9ad5b0c39ef20ddb7e87144d9c94dd212b2f08349c6a090eadd42736f4335a76f482e4f6762a"),
-			TokenExp:        pkg.GetEnvTDuration("JWT_TOKEN_EXP", 30*time.Minute),
-			RefreshTokenExp: pkg.GetEnvTDuration("JWT_REFRESH_TOKEN_EXP", 7*24*time.Hour),
-		},
-	}
+	// configuration
+	cfg := myCfg()
 
 	logger := zap.NewExample().Sugar()
 	defer logger.Sync()
@@ -76,13 +58,18 @@ func main() {
 
 	logger.Infow("Connected to database successfully")
 
+	gLm, sLm, hLm := myRateLimiters(cfg)
+
 	app := &config.Application{
 		AppConfig: cfg,
 		Logger:    logger,
 		JwtAUth: auth.NewJWTAuthenticator(
 			cfg.AuthConfig.Secret, cfg.AuthConfig.Iss, cfg.AuthConfig.Aud),
-		Store: store.NewStorage(db),
-		WsHub: ws.NewHub(),
+		Store:                store.NewStorage(db),
+		WsHub:                ws.NewHub(),
+		GeneralRateLimiter:   gLm,
+		SensitiveRateLimiter: sLm,
+		HeavyOpsRateLimiter:  hLm,
 	}
 
 	go app.WsHub.Run()

@@ -10,6 +10,7 @@ import (
 	"github.com/puremike/online_auction_api/contexts"
 	"github.com/puremike/online_auction_api/internal/config"
 	"github.com/puremike/online_auction_api/internal/errs"
+	"github.com/puremike/online_auction_api/internal/ratelimiters"
 )
 
 type Middeware struct {
@@ -136,6 +137,17 @@ func (m *Middeware) AuctionMiddleware() gin.HandlerFunc {
 		}
 
 		c.Set("auction", auction)
+		c.Next()
+	}
+}
+
+func (m *Middeware) RateLimiterMiddleware(limiter ratelimiters.Limiter) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		if !limiter.Allowed() {
+			c.JSON(http.StatusTooManyRequests, gin.H{"error": "rate limit exceeded"})
+			c.Abort()
+			return
+		}
 		c.Next()
 	}
 }

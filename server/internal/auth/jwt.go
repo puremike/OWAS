@@ -7,6 +7,12 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 )
 
+type Auth interface {
+	GenerateToken(claims jwt.Claims) (string, error)
+	ValidateToken(token string) (*jwt.Token, error)
+	GenerateRefreshToken() (string, error)
+}
+
 type JWTAuthenticator struct {
 	secret, iss, aud string
 }
