@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/puremike/online_auction_api/internal/auth"
+	"github.com/puremike/online_auction_api/internal/payments"
 	"github.com/puremike/online_auction_api/internal/ratelimiters"
 	"github.com/puremike/online_auction_api/internal/store"
 	"github.com/puremike/online_auction_api/internal/ws"
@@ -20,6 +21,7 @@ type Application struct {
 	GeneralRateLimiter   ratelimiters.Limiter
 	SensitiveRateLimiter ratelimiters.Limiter
 	HeavyOpsRateLimiter  ratelimiters.Limiter
+	Stripe               *payments.StripePayment
 }
 
 type AppConfig struct {
@@ -30,6 +32,13 @@ type AppConfig struct {
 	GeneralRL   RateLimiterConf
 	SensitiveRL RateLimiterConf
 	HeavyOpsRL  RateLimiterConf
+	StripeConf  StripeConf
+}
+
+type StripeConf struct {
+	StripeSecretKey string
+	CancelURL       string
+	SuccessURL      string
 }
 
 type RateLimiterConf struct {

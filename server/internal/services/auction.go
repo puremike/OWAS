@@ -48,6 +48,7 @@ func (a *AuctionService) CreateAuction(ctx context.Context, req *models.Auction)
 		StartTime:     req.StartTime,
 		EndTime:       req.EndTime,
 		SellerID:      req.SellerID,
+		WinnerID:      req.SellerID,
 	}
 
 	createdAuction, err := a.repo.CreateAuction(ctx, auction)
@@ -91,6 +92,7 @@ func (a *AuctionService) UpdateAuction(ctx context.Context, req *models.Auction,
 		StartTime:     req.StartTime,
 		EndTime:       req.EndTime,
 		SellerID:      req.SellerID,
+		WinnerID:      req.SellerID,
 	}
 
 	if err := a.repo.UpdateAuction(ctx, auction, id); err != nil {

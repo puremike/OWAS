@@ -1,0 +1,2 @@
+ALTER TABLE auctions
+ADD COLUMN winner_id UUID NOT NULL DEFAULT '23323d5c-7a6d-4f6d-8e8e-5d4d4d4d4d4d';

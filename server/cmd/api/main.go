@@ -6,6 +6,7 @@ import (
 	"github.com/puremike/online_auction_api/internal/auth"
 	"github.com/puremike/online_auction_api/internal/config"
 	"github.com/puremike/online_auction_api/internal/db"
+	"github.com/puremike/online_auction_api/internal/payments"
 	"github.com/puremike/online_auction_api/internal/routes"
 	"github.com/puremike/online_auction_api/internal/store"
 	"github.com/puremike/online_auction_api/internal/ws"
@@ -70,6 +71,7 @@ func main() {
 		GeneralRateLimiter:   gLm,
 		SensitiveRateLimiter: sLm,
 		HeavyOpsRateLimiter:  hLm,
+		Stripe:               payments.NewStripePayment(cfg.StripeConf.StripeSecretKey, cfg.StripeConf.CancelURL, cfg.StripeConf.SuccessURL),
 	}
 
 	go app.WsHub.Run()

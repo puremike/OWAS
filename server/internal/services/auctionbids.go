@@ -93,6 +93,7 @@ func (a *AuctionService) PlaceBid(ctx context.Context, req *models.PlaceBidReque
 	}
 
 	auction.CurrentPrice = req.BidAmount
+	auction.WinnerID = req.BidderID
 
 	// Close the auction immediately for Dutch
 	if auction.Type == models.DutchAuction {

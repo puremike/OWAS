@@ -14,6 +14,7 @@ type Auction struct {
 	StartTime     time.Time `json:"start_time"`
 	EndTime       time.Time `json:"end_time"`
 	SellerID      string    `json:"seller_id"`
+	WinnerID      string    `json:"winner_id"`
 	CreatedAt     time.Time `json:"created_at"`
 	UpdatedAt     time.Time `json:"updated_at"`
 }

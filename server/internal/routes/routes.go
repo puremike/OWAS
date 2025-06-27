@@ -30,22 +30,26 @@ func Routes(app *config.Application) http.Handler {
 
 	wsHandler := ws.NewWSHandler(app.WsHub)
 
+	paymentService := services.NewPaymentService(app.Stripe, app.Store.Payments)
+	webHookHandler := handlers.NewWebHookHander(paymentService, app.Store.Auctions)
+
 	api := g.Group("/api/v1")
 	api.Use(middleware.RateLimiterMiddleware(app.GeneralRateLimiter))
 	{
-		api.GET("swagger/*any", ginSwagger.WrapHandler(swaggerfiles.Handler))
+		api.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerfiles.Handler))
 		api.GET("/health", middleware.RateLimiterMiddleware(app.HeavyOpsRateLimiter), handlers.Health)
 		api.GET("/checking", func(c *gin.Context) {
 			c.JSON(http.StatusOK, gin.H{
 				"message": "checking",
 			})
 		})
+		api.POST("/webhook/stripe", webHookHandler.StripeWebHookHandler)
 	}
 
 	user := api.Group("/")
 	{
 		user.POST("/signup", userHandler.RegisterUser)
-		user.POST("/login", middleware.RateLimiterMiddleware(app.HeavyOpsRateLimiter), userHandler.Login)
+		user.POST("/login", middleware.RateLimiterMiddleware(app.SensitiveRateLimiter), userHandler.Login)
 		user.POST("/refresh", middleware.RateLimiterMiddleware(app.SensitiveRateLimiter), userHandler.RefreshToken)
 	}
 
@@ -72,6 +76,8 @@ func Routes(app *config.Application) http.Handler {
 		authGroup.POST("/contact-support", csHandler.ContactSupport)
 
 		authGroup.GET("/ws", wsHandler.ServeWs)
+
+		authGroup.POST("/auctions/:auctionID/create-checkout-session", middleware.AuctionMiddleware(), webHookHandler.CreateCheckoutSessionHandler)
 	}
 
 	return g

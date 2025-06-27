@@ -45,5 +45,11 @@ func myCfg() *config.AppConfig {
 			Rate:     pkg.GetEnvFloat("HEA_RATE_LIMITER_RATE", 0.00666),
 			Capacity: pkg.GetEnvFloat("HEA_RATE_LIMITER_CAPACITY", 2),
 		},
+
+		StripeConf: config.StripeConf{
+			StripeSecretKey: pkg.GetEnvString("STRIPE_SECRET_KEY", ""),
+			CancelURL:       pkg.GetEnvString("STRIPE_CANCEL_URL", ""),
+			SuccessURL:      pkg.GetEnvString("STRIPE_SUCCESS_URL", ""),
+		},
 	}
 }

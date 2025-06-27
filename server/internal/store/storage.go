@@ -40,6 +40,9 @@ type BidRepository interface {
 }
 
 type PaymentRepository interface {
+	CreatePayment(ctx context.Context, payment *models.Payment) error
+	GetPayment(ctx context.Context, orderID, buyerID string) (*models.Payment, error)
+	UpdatePayment(ctx context.Context, paymentStatus, id string) error
 }
 
 type NotificationRepository interface {

@@ -1,0 +1,2 @@
+ALTER TABLE payment
+ADD COLUMN order_id TEXT UNIQUE NOT NULL;

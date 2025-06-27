@@ -19,9 +19,9 @@ func (a *AuctionStore) GetAuctionById(ctx context.Context, id string) (*models.A
 
 	auction := &models.Auction{}
 
-	query := `SELECT id, seller_id, title, description, starting_price, current_price, type, status, start_time, end_time, created_at FROM auctions WHERE id = $1`
+	query := `SELECT id, seller_id, winner_id, title, description, starting_price, current_price, type, status, start_time, end_time, created_at FROM auctions WHERE id = $1`
 
-	if err := a.db.QueryRowContext(ctx, query, id).Scan(&auction.ID, &auction.SellerID, &auction.Title, &auction.Description, &auction.StartingPrice, &auction.CurrentPrice, &auction.Type, &auction.Status, &auction.StartTime, &auction.EndTime, &auction.CreatedAt); err != nil {
+	if err := a.db.QueryRowContext(ctx, query, id).Scan(&auction.ID, &auction.SellerID, &auction.WinnerID, &auction.Title, &auction.Description, &auction.StartingPrice, &auction.CurrentPrice, &auction.Type, &auction.Status, &auction.StartTime, &auction.EndTime, &auction.CreatedAt); err != nil {
 		if err == sql.ErrNoRows {
 			return nil, errs.ErrAuctionNotFound
 		}
@@ -94,7 +94,7 @@ func (a *AuctionStore) CreateAuction(ctx context.Context, auction *models.Auctio
 	ctx, cancel := context.WithTimeout(ctx, QueryBackgroundTimeout)
 	defer cancel()
 
-	query := `INSERT INTO auctions (seller_id, title, description, starting_price, current_price, type, status, start_time, end_time) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING id, seller_id, title, description, starting_price, current_price, type, status, start_time, end_time, created_at`
+	query := `INSERT INTO auctions (seller_id, winner_id, title, description, starting_price, current_price, type, status, start_time, end_time) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING id, seller_id, winner_id, title, description, starting_price, current_price, type, status, start_time, end_time, created_at`
 
 	tx, err := a.db.BeginTx(ctx, nil)
 	if err != nil {
@@ -103,7 +103,7 @@ func (a *AuctionStore) CreateAuction(ctx context.Context, auction *models.Auctio
 
 	defer tx.Rollback()
 
-	if err = tx.QueryRowContext(ctx, query, auction.SellerID, auction.Title, auction.Description, auction.StartingPrice, auction.CurrentPrice, auction.Type, auction.Status, auction.StartTime, auction.EndTime).Scan(&auction.ID, &auction.SellerID, &auction.Title, &auction.Description, &auction.StartingPrice, &auction.CurrentPrice, &auction.Type, &auction.Status, &auction.StartTime, &auction.EndTime, &auction.CreatedAt); err != nil {
+	if err = tx.QueryRowContext(ctx, query, auction.SellerID, auction.WinnerID, auction.Title, auction.Description, auction.StartingPrice, auction.CurrentPrice, auction.Type, auction.Status, auction.StartTime, auction.EndTime).Scan(&auction.ID, &auction.SellerID, &auction.WinnerID, &auction.Title, &auction.Description, &auction.StartingPrice, &auction.CurrentPrice, &auction.Type, &auction.Status, &auction.StartTime, &auction.EndTime, &auction.CreatedAt); err != nil {
 		return nil, err
 	}
 
@@ -118,7 +118,7 @@ func (a *AuctionStore) UpdateAuction(ctx context.Context, auction *models.Auctio
 	ctx, cancel := context.WithTimeout(ctx, QueryBackgroundTimeout)
 	defer cancel()
 
-	query := `UPDATE auctions SET seller_id = $1, title = $2, description = $3, starting_price = $4, current_price = $5, type = $6, status = $7, start_time = $8, end_time = $9 WHERE id = $10`
+	query := `UPDATE auctions SET seller_id = $1, title = $2, description = $3, starting_price = $4, current_price = $5, type = $6, status = $7, start_time = $8, end_time = $9, winner_id = $10 WHERE id = $11`
 
 	tx, err := a.db.BeginTx(ctx, nil)
 	if err != nil {
@@ -127,7 +127,7 @@ func (a *AuctionStore) UpdateAuction(ctx context.Context, auction *models.Auctio
 
 	defer tx.Rollback()
 
-	if _, err = tx.ExecContext(ctx, query, auction.SellerID, auction.Title, auction.Description, auction.StartingPrice, auction.CurrentPrice, auction.Type, auction.Status, auction.StartTime, auction.EndTime, id); err != nil {
+	if _, err = tx.ExecContext(ctx, query, auction.SellerID, auction.Title, auction.Description, auction.StartingPrice, auction.CurrentPrice, auction.Type, auction.Status, auction.StartTime, auction.EndTime, auction.WinnerID, id); err != nil {
 		return err
 	}
 
