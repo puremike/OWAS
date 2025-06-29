@@ -9,8 +9,9 @@ import (
 
 func myCfg() *config.AppConfig {
 	return &config.AppConfig{
-		Port: pkg.GetEnvString("PORT", "8080"),
-		Env:  pkg.GetEnvString("ENV", "development"),
+		Port:     pkg.GetEnvString("PORT", "8080"),
+		Env:      pkg.GetEnvString("ENV", "development"),
+		S3Bucket: pkg.GetEnvString("S3_BUCKET", ""),
 		DbConfig: config.DbConfig{
 			Db_addr:          pkg.GetEnvString("DB_ADDR", "postgres://user:userpassword@localhost:5432/OWAS?sslmode=disable"),
 			MaxIdleConns:     pkg.GetEnvInt("DB_MAX_IDLE_CONNS", 5),

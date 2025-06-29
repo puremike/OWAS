@@ -31,6 +31,8 @@ definitions:
         type: string
       updated_at:
         type: string
+      winner_id:
+        type: string
     type: object
   github_com_puremike_online_auction_api_internal_models.BidResponse:
     properties:
@@ -107,6 +109,11 @@ definitions:
       title:
         type: string
       type:
+        type: string
+    type: object
+  github_com_puremike_online_auction_api_internal_models.CreatePaymentResponse:
+    properties:
+      checkout_url:
         type: string
     type: object
   github_com_puremike_online_auction_api_internal_models.CreateUserRequest:
@@ -676,6 +683,75 @@ paths:
       summary: Close Auction
       tags:
       - Auctions
+  /auctions/{auctionID}/create-checkout-session:
+    post:
+      consumes:
+      - application/json
+      description: Create a Stripe Checkout Session for an auction, using the current
+        price of the auction and the authenticated user's ID.
+      parameters:
+      - description: ID of the auction to create a checkout session for
+        in: path
+        name: auction_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Stripe Checkout Session created successfully
+          schema:
+            $ref: '#/definitions/github_com_puremike_online_auction_api_internal_models.CreatePaymentResponse'
+        "400":
+          description: Bad Request - invalid input
+          schema:
+            $ref: '#/definitions/gin.H'
+        "401":
+          description: Unauthorized - user not authenticated
+          schema:
+            $ref: '#/definitions/gin.H'
+        "404":
+          description: Not Found - auction not found
+          schema:
+            $ref: '#/definitions/gin.H'
+        "500":
+          description: Internal Server Error - failed to create Stripe Checkout Session
+          schema:
+            $ref: '#/definitions/gin.H'
+      security:
+      - jwtCookieAuth: []
+      summary: Create Stripe Checkout Session for an auction
+      tags:
+      - Payments
+  /auctions/image_upload:
+    post:
+      consumes:
+      - multipart/form-data
+      description: Allows a user to upload an image to the server.
+      parameters:
+      - description: the image to upload
+        in: formData
+        name: image
+        required: true
+        type: file
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: image uploaded successfully
+          schema:
+            $ref: '#/definitions/gin.H'
+        "400":
+          description: Bad Request - no file uploaded
+          schema:
+            $ref: '#/definitions/gin.H'
+        "500":
+          description: Internal Server Error - failed to process file upload
+          schema:
+            $ref: '#/definitions/gin.H'
+      summary: Upload Image
+      tags:
+      - Images
   /contact-support:
     post:
       consumes:
@@ -837,6 +913,36 @@ paths:
       summary: Create user
       tags:
       - Users
+  /webhook/stripe:
+    post:
+      consumes:
+      - application/json
+      description: Processes Stripe webhook events for payment and checkout session
+        updates.
+      parameters:
+      - description: Stripe Signature Header
+        in: header
+        name: Stripe-Signature
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: success
+          schema:
+            $ref: '#/definitions/gin.H'
+        "400":
+          description: Bad Request - invalid input or unhandled event type
+          schema:
+            $ref: '#/definitions/gin.H'
+        "500":
+          description: Internal Server Error - failed to process event
+          schema:
+            $ref: '#/definitions/gin.H'
+      summary: Handle Stripe Webhook Events
+      tags:
+      - Webhook
 securityDefinitions:
   BearerAuth:
     description: 'Use a valid JWT token. Format: Bearer <token>'

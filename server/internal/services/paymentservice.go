@@ -6,6 +6,7 @@ import (
 	"log"
 
 	"github.com/puremike/online_auction_api/internal/errs"
+	"github.com/puremike/online_auction_api/internal/models"
 	"github.com/puremike/online_auction_api/internal/payments"
 	"github.com/puremike/online_auction_api/internal/store"
 	"github.com/stripe/stripe-go/v82"
@@ -30,7 +31,10 @@ const (
 	PaymentStatusFailed    = "failed"
 )
 
-func (p *PaymentService) CreatePaymentCheckout(amount int64, orderID, buyerID string) (*stripe.CheckoutSession, error) {
+func (p *PaymentService) CreatePaymentCheckout(ctx context.Context, amount int64, orderID, buyerID, auctionID string) (*stripe.CheckoutSession, error) {
+
+	ctx, cancel := context.WithTimeout(ctx, QueryDefaultContext)
+	defer cancel()
 
 	if amount < 0 {
 		log.Printf("amount cannot be negative: %v", amount)
@@ -66,6 +70,20 @@ func (p *PaymentService) CreatePaymentCheckout(amount int64, orderID, buyerID st
 	if err != nil {
 		log.Printf("failed to create Stripe checkout session: %v", err)
 		return nil, errs.ErrFailedToCreateStripeCheckout
+	}
+
+	req := &models.Payment{
+		Amount:    float64(amount),
+		OrderID:   orderID,
+		BuyerID:   buyerID,
+		Status:    PaymentStatusPending,
+		AuctionID: auctionID,
+	}
+
+	// create payment and save to DB
+	if err := p.repo.CreatePayment(ctx, req); err != nil {
+		log.Printf("failed to create payment: %v", err)
+		return nil, errs.ErrFailedToCreatePayment
 	}
 
 	return session, nil

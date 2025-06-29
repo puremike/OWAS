@@ -92,6 +92,7 @@ var (
 	ErrFailedToUnmarshalEvent         = NewHTTPError("failed to unmarshal Stripe event", http.StatusBadRequest)
 	ErrFailedToGetPayment             = NewHTTPError("failed to get payment record", http.StatusNotFound)
 	ErrFailedToUpdatePayment          = NewHTTPError("failed to update payment record", http.StatusInternalServerError)
+	ErrFailedToCreatePayment          = NewHTTPError("failed to create payment record", http.StatusInternalServerError)
 )
 
 // MapServiceErrors maps service-level errors to appropriate HTTP responses.

@@ -33,6 +33,7 @@ type AppConfig struct {
 	SensitiveRL RateLimiterConf
 	HeavyOpsRL  RateLimiterConf
 	StripeConf  StripeConf
+	S3Bucket    string
 }
 
 type StripeConf struct {

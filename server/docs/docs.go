@@ -219,6 +219,50 @@ const docTemplate = `{
                 }
             }
         },
+        "/auctions/image_upload": {
+            "post": {
+                "description": "Allows a user to upload an image to the server.",
+                "consumes": [
+                    "multipart/form-data"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Images"
+                ],
+                "summary": "Upload Image",
+                "parameters": [
+                    {
+                        "type": "file",
+                        "description": "the image to upload",
+                        "name": "image",
+                        "in": "formData",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "image uploaded successfully",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request - no file uploaded",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error - failed to process file upload",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    }
+                }
+            }
+        },
         "/auctions/{auctionID}": {
             "get": {
                 "security": [
@@ -520,6 +564,67 @@ const docTemplate = `{
                 }
             }
         },
+        "/auctions/{auctionID}/create-checkout-session": {
+            "post": {
+                "security": [
+                    {
+                        "jwtCookieAuth": []
+                    }
+                ],
+                "description": "Create a Stripe Checkout Session for an auction, using the current price of the auction and the authenticated user's ID.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Payments"
+                ],
+                "summary": "Create Stripe Checkout Session for an auction",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "ID of the auction to create a checkout session for",
+                        "name": "auction_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Stripe Checkout Session created successfully",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_puremike_online_auction_api_internal_models.CreatePaymentResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request - invalid input",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized - user not authenticated",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found - auction not found",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error - failed to create Stripe Checkout Session",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    }
+                }
+            }
+        },
         "/contact-support": {
             "post": {
                 "security": [
@@ -755,6 +860,50 @@ const docTemplate = `{
                 }
             }
         },
+        "/webhook/stripe": {
+            "post": {
+                "description": "Processes Stripe webhook events for payment and checkout session updates.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Webhook"
+                ],
+                "summary": "Handle Stripe Webhook Events",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Stripe Signature Header",
+                        "name": "Stripe-Signature",
+                        "in": "header",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "success",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request - invalid input or unhandled event type",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error - failed to process event",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    }
+                }
+            }
+        },
         "/{username}": {
             "get": {
                 "security": [
@@ -984,6 +1133,9 @@ const docTemplate = `{
                 },
                 "updated_at": {
                     "type": "string"
+                },
+                "winner_id": {
+                    "type": "string"
                 }
             }
         },
@@ -1094,6 +1246,14 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "type": {
+                    "type": "string"
+                }
+            }
+        },
+        "github_com_puremike_online_auction_api_internal_models.CreatePaymentResponse": {
+            "type": "object",
+            "properties": {
+                "checkout_url": {
                     "type": "string"
                 }
             }

@@ -41,16 +41,16 @@ func NewWebHookHander(service *services.PaymentService, auctionRepo store.Auctio
 // statuses or handle session completions. If the event type is unrecognized,
 // it returns an error response indicating the event type is unhandled.
 //
-// @Summary Handle Stripe Webhook Events
-// @Description Processes Stripe webhook events for payment and checkout session updates.
-// @Tags Webhook
-// @Accept json
-// @Produce json
-// @Param Stripe-Signature header string true "Stripe Signature Header"
-// @Success 200 {object} gin.H "success"
-// @Failure 400 {object} gin.H "Bad Request - invalid input or unhandled event type"
-// @Failure 500 {object} gin.H "Internal Server Error - failed to process event"
-// @Router /webhook/stripe [post]
+//	@Summary		Handle Stripe Webhook Events
+//	@Description	Processes Stripe webhook events for payment and checkout session updates.
+//	@Tags			Webhook
+//	@Accept			json
+//	@Produce		json
+//	@Param			Stripe-Signature	header		string	true	"Stripe Signature Header"
+//	@Success		200					{object}	gin.H	"success"
+//	@Failure		400					{object}	gin.H	"Bad Request - invalid input or unhandled event type"
+//	@Failure		500					{object}	gin.H	"Internal Server Error - failed to process event"
+//	@Router			/webhook/stripe [post]
 func (w *WebHookHandler) StripeWebHookHandler(c *gin.Context) {
 
 	// read the body request
@@ -145,7 +145,7 @@ func (w *WebHookHandler) StripeWebHookHandler(c *gin.Context) {
 //	@Accept			json
 //	@Produce		json
 //	@Param			auction_id	path		string							true	"ID of the auction to create a checkout session for"
-//	@Success		201			{object}	models.CreatePaymentResponse		"Stripe Checkout Session created successfully"
+//	@Success		201			{object}	models.CreatePaymentResponse	"Stripe Checkout Session created successfully"
 //	@Failure		400			{object}	gin.H							"Bad Request - invalid input"
 //	@Failure		401			{object}	gin.H							"Unauthorized - user not authenticated"
 //	@Failure		404			{object}	gin.H							"Not Found - auction not found"
@@ -178,7 +178,7 @@ func (w *WebHookHandler) CreateCheckoutSessionHandler(c *gin.Context) {
 	orderID := uuid.New().String()
 
 	// Call the service layer to create the Stripe Checkout Session
-	stripeSession, err := w.service.CreatePaymentCheckout(int64(auction.CurrentPrice), orderID, authUser.ID)
+	stripeSession, err := w.service.CreatePaymentCheckout(c.Request.Context(), int64(auction.CurrentPrice), orderID, authUser.ID, auction.ID)
 	if err != nil {
 		log.Printf("failed to create payment intent in service: %v", err)
 		errs.MapServiceErrors(c, err)

@@ -27,10 +27,10 @@ func NewCSHandler(csService *services.CSService) *CSHandler {
 //	@Accept			json
 //	@Produce		json
 //	@Param			payload	body		models.ContactSupportReq	true	"Contact Support payload"
-//	@Success		200			{object}	models.SupportRes
-//	@Failure		400			{object}	gin.H					"Bad Request - invalid input"
-//	@Failure		401			{object}	gin.H					"Unauthorized - user not authenticated"
-//	@Failure		500			{object}	gin.H					"Internal Server Error - failed to contact support"
+//	@Success		200		{object}	models.SupportRes
+//	@Failure		400		{object}	gin.H	"Bad Request - invalid input"
+//	@Failure		401		{object}	gin.H	"Unauthorized - user not authenticated"
+//	@Failure		500		{object}	gin.H	"Internal Server Error - failed to contact support"
 //	@Router			/contact-support [post]
 //
 //	@Security		jwtCookieAuth
