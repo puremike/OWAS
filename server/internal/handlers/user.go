@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"errors"
+	"log"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -198,6 +199,47 @@ func (u *UserHandler) UserProfile(c *gin.Context) {
 		return
 	}
 
+	res := models.UserResponse{
+		ID:        user.ID,
+		Username:  user.Username,
+		Email:     user.Email,
+		FullName:  user.FullName,
+		Location:  user.Location,
+		CreatedAt: user.CreatedAt,
+	}
+
+	c.JSON(http.StatusOK, res)
+}
+
+// MeProfile godoc
+//
+//	@Summary		Get authenticated user's profile
+//	@Description	Retrieves the profile details of the authenticated user.
+//	@Tags			Users
+//	@Produce		json
+//	@Success		200	{object}	models.UserResponse
+//	@Failure		401	{object}	gin.H	"Unauthorized - user not authenticated"
+//	@Failure		500	{object}	gin.H	"Internal Server Error - failed to retrieve profile"
+//	@Router			/me [get]
+//
+//	@Security		jwtCookieAuth
+
+func (u *UserHandler) MeProfile(c *gin.Context) {
+	authUser, err := contexts.GetUserFromContext(c)
+	if authUser == nil || err != nil {
+		log.Printf("ERROR: Could not get authenticated user from context: %v", err)
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+		return
+	}
+
+	user, err := u.service.MeProfile(c.Request.Context(), authUser.ID)
+	if err != nil {
+		log.Printf("failed to retrieve user profile for ID %s: %v", authUser.ID, err)
+		errs.MapServiceErrors(c, err)
+		return
+	}
+
+	// Respond with the UserResponse model
 	res := models.UserResponse{
 		ID:        user.ID,
 		Username:  user.Username,

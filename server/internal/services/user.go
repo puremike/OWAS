@@ -153,6 +153,29 @@ func (u *UserService) UserProfile(ctx context.Context, username string) (*models
 	}, nil
 }
 
+func (u *UserService) MeProfile(ctx context.Context, userID string) (*models.UserResponse, error) {
+
+	ctx, cancel := context.WithTimeout(ctx, QueryDefaultContext)
+	defer cancel()
+
+	user, err := u.repo.GetUserById(ctx, userID)
+	if err != nil {
+		if errors.Is(err, errs.ErrUserNotFound) {
+			return &models.UserResponse{}, errs.ErrUserNotFound
+		}
+		return &models.UserResponse{}, fmt.Errorf("failed to retrieve user: %w", err)
+
+	}
+	return &models.UserResponse{
+		ID:        user.ID,
+		Username:  MyCaser.String(user.Username),
+		Email:     user.Email,
+		FullName:  MyCaser.String(user.FullName),
+		Location:  MyCaser.String(user.Location),
+		CreatedAt: user.CreatedAt,
+	}, nil
+}
+
 func (u *UserService) Refresh(ctx context.Context, refreshToken string) (string, error) {
 
 	ctx, cancel := context.WithTimeout(ctx, QueryDefaultContext)
