@@ -1,0 +1,2 @@
+ALTER TABLE auctions
+DROP COLUMN IF EXISTS image_path;

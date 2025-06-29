@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"net/http"
+	"strconv"
 	"strings"
 	"time"
 
@@ -28,15 +29,15 @@ func NewAuctionHandler(service *services.AuctionService, app *config.Application
 // CreateAuction godoc
 //
 //	@Summary		Create Auction
-//	@Description	Create a new auction
+//	@Description	Creates a new auction.
 //	@Tags			Auctions
 //	@Accept			json
 //	@Produce		json
-//	@Param			payload	body		models.CreateAuctionRequest	true	"Auction payload"
-//	@Success		201		{object}	models.CreateAuctionResponse
-//	@Failure		400		{object}	gin.H	"Bad Request - invalid input"
-//	@Failure		401		{object}	gin.H	"Unauthorized - user not authenticated"
-//	@Failure		500		{object}	gin.H	"Internal Server Error - failed to create auction"
+//	@Param			payload	body		models.CreateAuctionRequest	true	"Auction create payload"
+//	@Success		201			{object}	models.CreateAuctionResponse	"Created auction"
+//	@Failure		400			{object}	gin.H						"Bad Request - invalid input"
+//	@Failure		401			{object}	gin.H						"Unauthorized - user not authenticated"
+//	@Failure		500			{object}	gin.H						"Internal Server Error - failed to create auction"
 //	@Router			/auctions [post]
 //
 //	@Security		jwtCookieAuth
@@ -75,6 +76,7 @@ func (a *AuctionHandler) CreateAuction(c *gin.Context) {
 		Status:        "open",
 		StartTime:     startDate,
 		EndTime:       endDate,
+		ImagePath:     payload.ImagePath,
 	}
 
 	createdAuction, err := a.service.CreateAuction(c.Request.Context(), auction)
@@ -95,6 +97,7 @@ func (a *AuctionHandler) CreateAuction(c *gin.Context) {
 		StartTime:     createdAuction.StartTime,
 		EndTime:       createdAuction.EndTime,
 		CreatedAt:     createdAuction.CreatedAt,
+		ImagePath:     createdAuction.ImagePath,
 	}
 
 	c.JSON(http.StatusCreated, res)
@@ -301,6 +304,7 @@ func (a *AuctionHandler) GetAuctionById(c *gin.Context) {
 		StartTime:     auction.StartTime,
 		EndTime:       auction.EndTime,
 		CreatedAt:     auction.CreatedAt,
+		ImagePath:     auction.ImagePath,
 	}
 
 	c.JSON(http.StatusOK, res)
@@ -319,14 +323,26 @@ func (a *AuctionHandler) GetAuctionById(c *gin.Context) {
 //	@Router			/auctions [get]
 //
 //	@Security		jwtCookieAuth
-func (a *AuctionHandler) AdminGetAuctions(c *gin.Context) {
+func (a *AuctionHandler) GetAuctions(c *gin.Context) {
+
+	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "10"))
+	offset, _ := strconv.Atoi(c.DefaultQuery("offset", "0"))
+	filter := &models.AuctionFilter{
+		Type:   c.Query("type"),
+		Status: c.Query("status"),
+		StartingPrice: func() float64 {
+			p, _ := strconv.ParseFloat(c.Query("starting_price"), 64)
+			return p
+		}(),
+	}
+
 	authUser, err := contexts.GetUserFromContext(c)
 	if authUser == nil || err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
 		return
 	}
 
-	auctions, err := a.service.GetAuctions(c.Request.Context())
+	auctions, err := a.service.GetAuctions(c.Request.Context(), limit, offset, filter)
 	if err != nil {
 		errs.MapServiceErrors(c, err)
 		return
@@ -346,6 +362,7 @@ func (a *AuctionHandler) AdminGetAuctions(c *gin.Context) {
 			StartTime:     auction.StartTime,
 			EndTime:       auction.EndTime,
 			CreatedAt:     auction.CreatedAt,
+			ImagePath:     auction.ImagePath,
 		})
 	}
 

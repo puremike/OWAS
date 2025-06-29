@@ -86,7 +86,7 @@ func Routes(app *config.Application) http.Handler {
 		authGroup.PUT("/:username/change-password", userHandler.ChangePassword)
 
 		authGroup.GET("/admin/users", middlewares.AuthorizeRoles(true), userHandler.AdminGetUsers)
-		authGroup.GET("/auctions", auctionHandler.AdminGetAuctions)
+		authGroup.GET("/auctions", auctionHandler.GetAuctions)
 		authGroup.DELETE("/admin/auctions/:auctionID", middleware.AuctionMiddleware(), middlewares.AuthorizeRoles(true), auctionHandler.AdminDeleteAuction)
 
 		authGroup.POST("/auctions", auctionHandler.CreateAuction)

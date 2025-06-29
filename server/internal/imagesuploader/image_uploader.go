@@ -24,6 +24,7 @@ import (
 type ImageService struct {
 	bucket *string
 	client *s3.Client
+	region string
 }
 
 func NewImageService(bucket string) *ImageService {
@@ -37,6 +38,7 @@ func NewImageService(bucket string) *ImageService {
 	return &ImageService{
 		bucket: aws.String(bucket),
 		client: client,
+		region: cfg.Region,
 	}
 }
 
@@ -87,8 +89,8 @@ func (i *ImageService) UploadImage(ctx context.Context, file *multipart.FileHead
 	mimeType := http.DetectContentType(buffer)
 	ext, allowed := allowedContentType[mimeType]
 	if !allowed {
-		log.Printf("unsupported file type: %s. Only JPEG, PNG, GIF are allowed.", mimeType)
-		return "", errs.NewHTTPError(fmt.Sprintf("unsupported file type: %s. Only JPEG, PNG, GIF are allowed.", mimeType), http.StatusBadRequest)
+		log.Printf("unsupported file type: %s. Only JPEG and PNG are allowed.", mimeType)
+		return "", errs.NewHTTPError(fmt.Sprintf("unsupported file type: %s. Only JPEG and PNG are allowed.", mimeType), http.StatusBadRequest)
 	}
 
 	key := "uploads/" + pkg.GenerateUniqueFileName() + strings.ToLower(ext)
@@ -137,17 +139,20 @@ func (i *ImageService) UploadImage(ctx context.Context, file *multipart.FileHead
 
 	// generate presigned URL
 
-	presignClient := s3.NewPresignClient(i.client)
-	presignedURL, err := presignClient.PresignGetObject(ctx, &s3.GetObjectInput{
-		Bucket: i.bucket,
-		Key:    &key,
-	}, s3.WithPresignExpires(PresignURLExpires))
-	if err != nil {
-		log.Printf("failed to generate presigned URL: %v", err)
-		return "", errs.NewHTTPError("failed to generate presigned URL", http.StatusInternalServerError)
-	}
+	// presignClient := s3.NewPresignClient(i.client)
+	// presignedURL, err := presignClient.PresignGetObject(ctx, &s3.GetObjectInput{
+	// 	Bucket: i.bucket,
+	// 	Key:    &key,
+	// }, s3.WithPresignExpires(PresignURLExpires))
+	// if err != nil {
+	// 	log.Printf("failed to generate presigned URL: %v", err)
+	// 	return "", errs.NewHTTPError("failed to generate presigned URL", http.StatusInternalServerError)
+	// }
 
-	return presignedURL.URL, nil
+	// return presignedURL.URL, nil
+
+	publicUR := fmt.Sprintf("https://%s.s3.%s.amazonaws.com/%s", *i.bucket, i.region, key)
+	return publicUR, nil
 }
 
 //  LOCAL STORAGE

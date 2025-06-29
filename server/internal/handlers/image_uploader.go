@@ -20,6 +20,10 @@ func NewImageHandler(imageService *imagesuploader.ImageService) *ImageHandler {
 	}
 }
 
+type imageRes struct {
+	ImagePath string `json:"image_path"`
+}
+
 // UploadImage godoc
 //
 //	@Summary		Upload Image
@@ -45,17 +49,17 @@ func (i *ImageHandler) UploadImage(c *gin.Context) {
 		return
 	}
 
-	imageURl, err := i.imageService.UploadImage(c.Request.Context(), file)
+	imagePath, err := i.imageService.UploadImage(c.Request.Context(), file)
 	if err != nil {
 		log.Printf("image service failed to upload file: %v", err)
 		errs.MapServiceErrors(c, err)
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{
-		"message":   "image uploaded successfully",
-		"image_url": imageURl,
-	})
+	res := imageRes{
+		ImagePath: imagePath,
+	}
+	c.JSON(http.StatusOK, res)
 
-	log.Printf("image uploaded successfully: %s", imageURl)
+	log.Printf("image uploaded successfully: %s", imagePath)
 }

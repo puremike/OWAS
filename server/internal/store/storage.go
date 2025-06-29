@@ -22,7 +22,7 @@ type UserRepository interface {
 
 type AuctionRepository interface {
 	GetAuctionById(ctx context.Context, id string) (*models.Auction, error)
-	GetAuctions(ctx context.Context) (*[]models.Auction, error)
+	GetAuctions(ctx context.Context, limit, offset int, filter *models.AuctionFilter) (*[]models.Auction, error)
 	CreateAuction(ctx context.Context, auction *models.Auction) (*models.Auction, error)
 	CloseAuction(ctx context.Context, status, id string) error
 	UpdateAuction(ctx context.Context, auction *models.Auction, id string) error

@@ -3,6 +3,7 @@ package store
 import (
 	"context"
 	"database/sql"
+	"strconv"
 
 	"github.com/puremike/online_auction_api/internal/errs"
 	"github.com/puremike/online_auction_api/internal/models"
@@ -19,9 +20,9 @@ func (a *AuctionStore) GetAuctionById(ctx context.Context, id string) (*models.A
 
 	auction := &models.Auction{}
 
-	query := `SELECT id, seller_id, winner_id, title, description, starting_price, current_price, type, status, start_time, end_time, created_at FROM auctions WHERE id = $1`
+	query := `SELECT id, seller_id, winner_id, title, description, starting_price, current_price, type, status, start_time, end_time, image_path, created_at FROM auctions WHERE id = $1`
 
-	if err := a.db.QueryRowContext(ctx, query, id).Scan(&auction.ID, &auction.SellerID, &auction.WinnerID, &auction.Title, &auction.Description, &auction.StartingPrice, &auction.CurrentPrice, &auction.Type, &auction.Status, &auction.StartTime, &auction.EndTime, &auction.CreatedAt); err != nil {
+	if err := a.db.QueryRowContext(ctx, query, id).Scan(&auction.ID, &auction.SellerID, &auction.WinnerID, &auction.Title, &auction.Description, &auction.StartingPrice, &auction.CurrentPrice, &auction.Type, &auction.Status, &auction.StartTime, &auction.EndTime, &auction.ImagePath, &auction.CreatedAt); err != nil {
 		if err == sql.ErrNoRows {
 			return nil, errs.ErrAuctionNotFound
 		}
@@ -56,15 +57,34 @@ func (a *AuctionStore) CloseAuction(ctx context.Context, status, id string) erro
 	return nil
 }
 
-func (a *AuctionStore) GetAuctions(ctx context.Context) (*[]models.Auction, error) {
+func (a *AuctionStore) GetAuctions(ctx context.Context, limit, offset int, filter *models.AuctionFilter) (*[]models.Auction, error) {
 	ctx, cancel := context.WithTimeout(ctx, QueryBackgroundTimeout)
 	defer cancel()
 
 	var auctions []models.Auction
 
-	query := `SELECT id, seller_id, title, description, starting_price, current_price, type, status, start_time, end_time, created_at FROM auctions`
+	query := `SELECT id, seller_id, title, description, starting_price, current_price, type, status, start_time, end_time, image_path, created_at FROM auctions WHERE 1=1`
 
-	rows, err := a.db.QueryContext(ctx, query)
+	args := []any{}
+
+	if filter.Type != "" {
+		query += ` AND type = $` + strconv.Itoa(len(args)+1)
+		args = append(args, filter.Type)
+	}
+	if filter.Status != "" {
+		query += ` AND status = $` + strconv.Itoa(len(args)+1)
+		args = append(args, filter.Status)
+	}
+
+	if filter.StartingPrice != 0 {
+		query += ` AND starting_price = $` + strconv.Itoa(len(args)+1)
+		args = append(args, filter.StartingPrice)
+	}
+
+	query += ` ORDER BY created_at DESC LIMIT $` + strconv.Itoa(len(args)+1) + ` OFFSET $` + strconv.Itoa(len(args)+2)
+	args = append(args, limit, offset)
+
+	rows, err := a.db.QueryContext(ctx, query, args...)
 	if err != nil {
 		return nil, err
 	}
@@ -74,7 +94,7 @@ func (a *AuctionStore) GetAuctions(ctx context.Context) (*[]models.Auction, erro
 	for rows.Next() {
 		var a models.Auction
 
-		if err := rows.Scan(&a.ID, &a.SellerID, &a.Title, &a.Description, &a.StartingPrice, &a.CurrentPrice, &a.Type, &a.Status, &a.StartTime, &a.EndTime, &a.CreatedAt); err != nil {
+		if err := rows.Scan(&a.ID, &a.SellerID, &a.Title, &a.Description, &a.StartingPrice, &a.CurrentPrice, &a.Type, &a.Status, &a.StartTime, &a.EndTime, &a.ImagePath, &a.CreatedAt); err != nil {
 			return nil, err
 		}
 
@@ -94,7 +114,7 @@ func (a *AuctionStore) CreateAuction(ctx context.Context, auction *models.Auctio
 	ctx, cancel := context.WithTimeout(ctx, QueryBackgroundTimeout)
 	defer cancel()
 
-	query := `INSERT INTO auctions (seller_id, winner_id, title, description, starting_price, current_price, type, status, start_time, end_time) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING id, seller_id, winner_id, title, description, starting_price, current_price, type, status, start_time, end_time, created_at`
+	query := `INSERT INTO auctions (seller_id, winner_id, title, description, starting_price, current_price, type, status, start_time, end_time, image_path) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) RETURNING id, seller_id, winner_id, title, description, starting_price, current_price, type, status, start_time, end_time, image_path, created_at`
 
 	tx, err := a.db.BeginTx(ctx, nil)
 	if err != nil {
@@ -103,7 +123,7 @@ func (a *AuctionStore) CreateAuction(ctx context.Context, auction *models.Auctio
 
 	defer tx.Rollback()
 
-	if err = tx.QueryRowContext(ctx, query, auction.SellerID, auction.WinnerID, auction.Title, auction.Description, auction.StartingPrice, auction.CurrentPrice, auction.Type, auction.Status, auction.StartTime, auction.EndTime).Scan(&auction.ID, &auction.SellerID, &auction.WinnerID, &auction.Title, &auction.Description, &auction.StartingPrice, &auction.CurrentPrice, &auction.Type, &auction.Status, &auction.StartTime, &auction.EndTime, &auction.CreatedAt); err != nil {
+	if err = tx.QueryRowContext(ctx, query, auction.SellerID, auction.WinnerID, auction.Title, auction.Description, auction.StartingPrice, auction.CurrentPrice, auction.Type, auction.Status, auction.StartTime, auction.EndTime, auction.ImagePath).Scan(&auction.ID, &auction.SellerID, &auction.WinnerID, &auction.Title, &auction.Description, &auction.StartingPrice, &auction.CurrentPrice, &auction.Type, &auction.Status, &auction.StartTime, &auction.EndTime, &auction.ImagePath, &auction.CreatedAt); err != nil {
 		return nil, err
 	}
 

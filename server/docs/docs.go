@@ -169,7 +169,7 @@ const docTemplate = `{
                         "jwtCookieAuth": []
                     }
                 ],
-                "description": "Create a new auction",
+                "description": "Creates a new auction.",
                 "consumes": [
                     "application/json"
                 ],
@@ -182,7 +182,7 @@ const docTemplate = `{
                 "summary": "Create Auction",
                 "parameters": [
                     {
-                        "description": "Auction payload",
+                        "description": "Auction create payload",
                         "name": "payload",
                         "in": "body",
                         "required": true,
@@ -193,7 +193,7 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "201": {
-                        "description": "Created",
+                        "description": "Created auction",
                         "schema": {
                             "$ref": "#/definitions/github_com_puremike_online_auction_api_internal_models.CreateAuctionResponse"
                         }
@@ -1111,6 +1111,9 @@ const docTemplate = `{
                 "id": {
                     "type": "string"
                 },
+                "image_path": {
+                    "type": "string"
+                },
                 "seller_id": {
                     "type": "string"
                 },
@@ -1190,6 +1193,9 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "end_time": {
+                    "type": "string"
+                },
+                "image_path": {
                     "type": "string"
                 },
                 "start_time": {

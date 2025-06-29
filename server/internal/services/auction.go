@@ -49,6 +49,7 @@ func (a *AuctionService) CreateAuction(ctx context.Context, req *models.Auction)
 		EndTime:       req.EndTime,
 		SellerID:      req.SellerID,
 		WinnerID:      req.SellerID,
+		ImagePath:     req.ImagePath,
 	}
 
 	createdAuction, err := a.repo.CreateAuction(ctx, auction)
@@ -68,6 +69,7 @@ func (a *AuctionService) CreateAuction(ctx context.Context, req *models.Auction)
 		StartTime:     createdAuction.StartTime,
 		EndTime:       createdAuction.EndTime,
 		CreatedAt:     createdAuction.CreatedAt,
+		ImagePath:     createdAuction.ImagePath,
 	}
 
 	return res, nil
@@ -139,17 +141,18 @@ func (a *AuctionService) GetAuctionById(ctx context.Context, id string) (*models
 		StartTime:     auction.StartTime,
 		EndTime:       auction.EndTime,
 		CreatedAt:     auction.CreatedAt,
+		ImagePath:     auction.ImagePath,
 	}
 
 	return res, nil
 }
 
-func (a *AuctionService) GetAuctions(ctx context.Context) (*[]models.CreateAuctionResponse, error) {
+func (a *AuctionService) GetAuctions(ctx context.Context, limit, offset int, filter *models.AuctionFilter) (*[]models.CreateAuctionResponse, error) {
 
 	ctx, cancel := context.WithTimeout(ctx, QueryDefaultContext)
 	defer cancel()
 
-	auctions, err := a.repo.GetAuctions(ctx)
+	auctions, err := a.repo.GetAuctions(ctx, limit, offset, filter)
 	if err != nil {
 		return &[]models.CreateAuctionResponse{}, errors.New("failed to retrieve auctions")
 	}
@@ -169,6 +172,7 @@ func (a *AuctionService) GetAuctions(ctx context.Context) (*[]models.CreateAucti
 			StartTime:     auction.StartTime,
 			EndTime:       auction.EndTime,
 			CreatedAt:     auction.CreatedAt,
+			ImagePath:     auction.ImagePath,
 		})
 	}
 

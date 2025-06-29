@@ -107,9 +107,29 @@ func (u *UserHandler) Login(c *gin.Context) {
 		return
 	}
 
-	c.SetCookie("jwt", user.Token, int(u.app.AppConfig.AuthConfig.TokenExp.Seconds()), "/", "", false, true)
-	c.SetCookie("refresh_token", user.RefreshToken, int(u.app.AppConfig.AuthConfig.RefreshTokenExp.Seconds()), "/", "", false, true)
-	c.SetSameSite(http.SameSiteStrictMode)
+	// c.SetCookie("jwt", user.Token, int(u.app.AppConfig.AuthConfig.TokenExp.Seconds()), "/", "", false, true)
+	// c.SetCookie("refresh_token", user.RefreshToken, int(u.app.AppConfig.AuthConfig.RefreshTokenExp.Seconds()), "/", "", false, true)
+	// c.SetSameSite(http.SameSiteStrictMode)
+
+	http.SetCookie(c.Writer, &http.Cookie{
+		Name:     "jwt",
+		Value:    user.Token,
+		Path:     "/",
+		MaxAge:   int(u.app.AppConfig.AuthConfig.TokenExp.Seconds()),
+		HttpOnly: true,
+		Secure:   false, // change to true in production
+		SameSite: http.SameSiteLaxMode,
+	})
+
+	http.SetCookie(c.Writer, &http.Cookie{
+		Name:     "refresh_token",
+		Value:    user.RefreshToken,
+		Path:     "/",
+		MaxAge:   int(u.app.AppConfig.AuthConfig.RefreshTokenExp.Seconds()),
+		HttpOnly: true,
+		Secure:   false, // change to true in production
+		SameSite: http.SameSiteLaxMode,
+	})
 
 	c.JSON(http.StatusOK, "login successful")
 }
