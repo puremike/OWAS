@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Auction List</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script defer src="js/auctions.js"></script>
+  <script defer src="js/api.js"></script>
+</head>
+<body class="bg-gray-100 text-gray-800">
+
+  <nav class="bg-white shadow-md py-4 px-6 flex justify-between items-center">
+    <h1 class="text-2xl font-bold text-gray-800"><a href="index.html">🏆Online Auction</a></h1>
+    <div id="nav-buttons" class="space-x-4">
+      <button id="logout-btn" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-red-600">Logout</button>
+    </div>
+  </nav>
+
+  <main class="max-w-6xl mx-auto p-6">
+    <h2 class="text-3xl font-bold mb-6">Available Auctions</h2>
+    <div class="mb-6 items-center flex space-x-4">
+        <select id="type-filter" class="border p-2 rounded">
+            <option value="">All Types</option>
+            <option value="english">English</option>
+            <option value="dutch">Dutch</option>
+            <option value="sealed">Sealed</option>
+        </select>
+    
+        <select id="status-filter" class="border p-2 rounded">
+            <option value="">All Statuses</option>
+            <option value="open">Open</option>
+            <option value="closed">Closed</option>
+        </select>
+    
+        <button id="apply-filters" class="bg-blue-500 text-white px-4 py-2 rounded">Apply</button>
+    </div>
+
+    <div id="auction-list" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+      <!-- Auctions will be loaded here -->
+    </div>
+
+    <div class="mt-4 flex justify-between">
+        <button id="prev-page" class="bg-gray-500 text-white px-4 py-2 rounded disabled:bg-gray-300">Previous</button>
+        <span id="page-info"></span>
+        <button id="next-page" class="bg-gray-500 text-white px-4 py-2 rounded disabled:bg-gray-300">Next</button>
+    </div>
+
+    <div id="message" class="mt-4 text-center text-red-600 hidden"></div>
+  </main>
+
+</body>
+</html>

@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Online Auctions - Home</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="js/api.js" defer></script>
+  <script src="js/index.js" defer></script>
+</head>
+<body class="bg-gray-100 min-h-screen flex flex-col">
+
+  <!-- Navbar -->
+  <nav class="bg-white shadow-md py-4 px-6 flex justify-between items-center">
+    <h1 class="text-2xl font-bold text-gray-800">🏆 Online Auction</h1>
+    <div id="nav-buttons" class="space-x-4">
+      <!-- JS can later dynamically inject Login/Logout buttons -->
+    </div>
+  </nav>
+
+  <!-- Hero Section -->
+  <section class="bg-yellow-100 py-12 px-6 text-center">
+    <h2 class="text-3xl font-bold text-gray-800 mb-4">Welcome to the Ultimate Online Auction Experience!</h2>
+    <p class="text-lg text-gray-700 mb-6">Bid on exclusive items, rare collectibles, and more.</p>
+    <div id="nav-buttons" class="space-x-4">
+        <!-- Buttons will be injected here -->
+      </div>
+  </section>
+
+  <!-- Popular Categories -->
+  <main class="flex-grow p-6 max-w-6xl mx-auto">
+    <h3 class="text-2xl font-semibold mb-6">Popular Categories</h3>
+    <div class="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+      <div class="bg-white rounded shadow p-4">
+        <img src="https://via.placeholder.com/300x200?text=Antique+Vase" alt="Antique Vase" class="w-full h-48 object-cover rounded mb-4">
+        <h4 class="text-xl font-bold mb-2">Antiques</h4>
+        <p class="text-gray-700">Discover rare antiques and timeless collectibles.</p>
+      </div>
+
+      <div class="bg-white rounded shadow p-4">
+        <img src="https://via.placeholder.com/300x200?text=Sports+Memorabilia" alt="Sports Memorabilia" class="w-full h-48 object-cover rounded mb-4">
+        <h4 class="text-xl font-bold mb-2">Sports Memorabilia</h4>
+        <p class="text-gray-700">Bid on signed jerseys, equipment, and historic collectibles.</p>
+      </div>
+
+      <div class="bg-white rounded shadow p-4">
+        <img src="https://via.placeholder.com/300x200?text=Luxury+Watches" alt="Luxury Watches" class="w-full h-48 object-cover rounded mb-4">
+        <h4 class="text-xl font-bold mb-2">Luxury Watches</h4>
+        <p class="text-gray-700">Find elegant timepieces from top brands.</p>
+      </div>
+    </div>
+
+     <!-- Auction Types -->
+     <section class="mt-12">
+        <h3 class="text-2xl font-semibold mb-6">Explore Auction Types</h3>
+        <div class="grid gap-6 md:grid-cols-3">
+  
+          <a href="dutch.html" class="block bg-blue-100 rounded shadow p-6 text-center hover:shadow-lg transition">
+            <div class="text-4xl mb-4">📉</div>
+            <h4 class="text-xl font-bold mb-2">Dutch Auction</h4>
+            <p class="text-gray-700">Learn how prices fall until someone places a winning bid.</p>
+          </a>
+  
+          <a href="english.html" class="block bg-green-100 rounded shadow p-6 text-center hover:shadow-lg transition">
+            <div class="text-4xl mb-4">🔨</div>
+            <h4 class="text-xl font-bold mb-2">English Auction</h4>
+            <p class="text-gray-700">Understand the classic highest-bidder-wins format.</p>
+          </a>
+  
+          <a href="sealed.html" class="block bg-purple-100 rounded shadow p-6 text-center hover:shadow-lg transition">
+            <div class="text-4xl mb-4">📩</div>
+            <h4 class="text-xl font-bold mb-2">Sealed Bid Auction</h4>
+            <p class="text-gray-700">Explore how secret bids create suspenseful outcomes.</p>
+          </a>
+  
+        </div>
+      </section>
+
+    <!-- Final Call-to-Action -->
+    <section class="mt-12 bg-gray-200 p-6 rounded shadow text-center">
+      <h4 class="text-xl font-semibold mb-2">Start Bidding Today!</h4>
+      <button id="start-bidding-btn" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">Start Bidding Today</button>
+<!-- 
+      <p class="text-gray-700 mb-4">Don't miss your chance to grab exclusive deals and rare items.</p>
+      <a href="auth.html" class="inline-block bg-blue-500 text-white px-6 py-3 rounded hover:bg-blue-600 transition">Login / Signup</a> -->
+    </section>
+
+  </main>
+
+  <!-- Footer -->
+  <footer class="bg-white shadow-md py-4 text-center text-gray-600">
+    &copy; 2025 Online Auction Platform. All rights reserved.
+  </footer>
+
+</body>
+</html>

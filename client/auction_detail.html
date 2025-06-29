@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Auction Details</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="js/api.js" defer></script>
+  <script src="js/auction_details.js" defer></script>
+</head>
+<body class="bg-gray-100 min-h-screen flex flex-col">
+
+  <nav class="bg-white shadow-md py-4 px-6 flex justify-between items-center">
+    <h1 class="text-2xl font-bold text-gray-800 cursor-pointer" onclick="window.location.href='index.html'">🏆 Online Auction</h1>
+    <div id="nav-buttons" class="space-x-4">
+      <!-- Nav buttons will be injected here -->
+    </div>
+  </nav>
+
+
+    <main class="p-6 max-w-3xl mx-auto">
+      <div id="auction-details" class="bg-white p-4 rounded shadow mb-6">
+        <!-- Auction details will load here -->
+      </div>
+  
+      <div id="bid-form-section" class="bg-white p-4 rounded shadow">
+        <h2 class="text-xl font-semibold mb-4">Place a Bid</h2>
+        <form id="bid-form">
+          <input type="number" id="bid-amount" placeholder="Enter your bid amount" class="border p-2 w-full mb-4" required />
+          <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">Place Bid</button>
+        </form>
+        <div id="bid-message" class="mt-4 text-center"></div>
+      </div>
+    </main>
+    <!-- <h2 id="auction-title" class="text-3xl font-bold mb-4"></h2>
+    <p id="auction-description" class="mb-4"></p>
+    <p id="auction-type" class="mb-4 font-semibold"></p>
+    <p id="auction-starting-price" class="mb-4"></p>
+    <p id="auction-current-price" class="mb-4"></p>
+    <p id="auction-status" class="mb-4 font-semibold"></p>
+    <p id="auction-seller-id" class="mb-4"></p>
+    <p id="auction-end-date" class="mb-4"></p>
+    <p id="auction-created-at" class="mb-4"></p>
+  
+    <div id="error-message" class="text-red-500"></div> -->
+
+</body>
+</html>

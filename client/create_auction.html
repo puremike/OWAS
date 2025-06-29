@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Create Auction</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="js/api.js" defer></script>
+  <script src="js/create_auction.js" defer></script>
+</head>
+<body class="bg-gray-100 min-h-screen flex flex-col">
+
+  <nav class="bg-white shadow-md py-4 px-6 flex justify-between items-center">
+    <h1 class="text-2xl font-bold text-gray-800">🏆 Online Auction</h1>
+    <a href="index.html" class="text-blue-600 hover:underline">Home</a>
+  </nav>
+
+  <main class="p-6 max-w-3xl mx-auto">
+    <h2 class="text-2xl font-bold mb-4">Upload Auction Image</h2>
+
+<form id="image-upload-form" enctype="multipart/form-data" class="space-y-4 mb-8">
+  <input type="file" id="image" name="image" accept="image/*" required class="w-full border rounded p-2">
+  <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded">Upload Image</button>
+  <div id="image-upload-message" class="text-sm mt-2"></div>
+</form>
+
+<!-- Auction Creation Form -->
+<h2 class="text-2xl font-bold mb-4">Create New Auction</h2>
+
+<form id="create-auction-form" class="space-y-4">
+  <input type="hidden" id="image_path" name="image_path">
+
+  <input type="text" id="title" name="title" placeholder="Auction Title" required class="w-full border rounded p-2">
+  <textarea id="description" name="description" placeholder="Auction Description" required class="w-full border rounded p-2"></textarea>
+
+  <input type="number" id="starting_price" name="starting_price" placeholder="Starting Price" step="0.01" required class="w-full border rounded p-2">
+
+  <select id="auction_type" name="auction_type" required class="w-full border rounded p-2">
+    <option value="">Select Auction Type</option>
+    <option value="english">English Auction</option>
+    <option value="dutch">Dutch Auction</option>
+    <option value="sealed">Sealed Bid Auction</option>
+  </select>
+
+  <input type="date" id="start_time" name="start_time" required class="w-full border rounded p-2">
+  <input type="date" id="end_time" name="end_time" required class="w-full border rounded p-2">
+
+  <button type="submit" class="bg-green-500 text-white px-4 py-2 rounded">Create Auction</button>
+  <div id="create-message" class="text-sm mt-2"></div>
+</form>
+      
+  </main>
+
+</body>
+</html>
