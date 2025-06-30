@@ -7,6 +7,19 @@ document.addEventListener('DOMContentLoaded', () => {
         await changePassword();
     });
 
+    // Handle Delete Account button
+    document.getElementById('delete-account-btn').addEventListener('click', () => {
+        document.getElementById('delete-confirm-modal').classList.remove('hidden');
+    });
+
+    document.getElementById('cancel-delete-account').addEventListener('click', () => {
+        document.getElementById('delete-confirm-modal').classList.add('hidden');
+    });
+
+    document.getElementById('confirm-delete-account').addEventListener('click', async () => {
+        await deleteAccount();
+    });
+
 });
 
 async function loadUserInfo() {
@@ -31,19 +44,23 @@ async function loadUserInfo() {
 }
 
 async function changePassword() {
-    const current = document.getElementById('current-password').value;
-    const newPass = document.getElementById('new-password').value;
-    const confirm = document.getElementById('confirm-password').value;
+    const old_password = document.getElementById('current-password').value;
+    const new_password = document.getElementById('new-password').value;
+    const confirm_password = document.getElementById('confirm-password').value;
 
-    if (newPass !== confirm) {
+    if (new_password !== confirm_password) {
         showMessage('New passwords do not match.', 'error');
+        return;
+    }
+
+    if (new_password == old_password) {
+        showMessage('New password cannot be the same as the old password.', 'error');
         return;
     }
 
     try {
         await apiRequest('/change-password', 'POST', {
-            current_password: current,
-            new_password: newPass
+            old_password: old_password, new_password: new_password, confirm_password: confirm_password
         }, true);
         showMessage('Password updated successfully.', 'success');
         document.getElementById('password-form').reset();
@@ -52,9 +69,29 @@ async function changePassword() {
     }
 }
 
+async function deleteAccount() {
+    try {
+        await apiRequest('/users', 'DELETE', null, true);
+        showDeleteMessage('Account deleted successfully. Redirecting to homepage...', 'success');
+        setTimeout(() => window.location.href = 'index.html', 2000);
+    } catch (error) {
+        showDeleteMessage('Failed to delete account.', 'error');
+    } finally {
+        document.getElementById('delete-confirm-modal').classList.add('hidden');
+    }
+}
+
 function showMessage(message, type) {
     const msgDiv = document.getElementById('message');
     msgDiv.textContent = message;
     msgDiv.className = `mt-4 text-center ${type === 'error' ? 'text-red-600' : 'text-green-600'}`;
+    msgDiv.classList.remove('hidden');
+}
+
+
+function showDeleteMessage(message, type) {
+    const msgDiv = document.getElementById('delete-message');
+    msgDiv.textContent = message;
+    msgDiv.className = `${type === 'error' ? 'text-red-600' : 'text-green-600'} mt-4`;
     msgDiv.classList.remove('hidden');
 }
