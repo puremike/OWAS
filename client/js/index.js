@@ -39,10 +39,35 @@ document.addEventListener('DOMContentLoaded', async () => {
   
       // ✅ User is logged in
       navButtons.innerHTML = `
-        <a href="create_auction.html" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">Create Auctions</a>
-        <a href="auctions.html" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">View Auctions</a>
-        <button id="logout-btn" class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600">Logout</button>
-      `;
+  <div class="relative">
+    <button id="menu-btn" class="text-gray-800 focus:outline-none">
+      <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path>
+      </svg>
+    </button>
+    <div id="menu-dropdown" class="hidden absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-2 z-10">
+      <a href="create_auction.html" class="block px-4 py-2 text-gray-800 hover:bg-blue-500 hover:text-white">Create Auctions</a>
+      <a href="auctions.html" class="block px-4 py-2 text-gray-800 hover:bg-blue-500 hover:text-white">View Auctions</a>
+      <a href="profile.html" class="block px-4 py-2 text-gray-800 hover:bg-blue-500 hover:text-white">Profile</a>
+      <button id="logout-btn" class="block w-full text-left px-4 py-2 text-gray-800 hover:bg-red-500 hover:text-white">Logout</button>
+    </div>
+  </div>
+`;
+
+// Toggle dropdown on menu button click
+document.getElementById('menu-btn').addEventListener('click', () => {
+  const dropdown = document.getElementById('menu-dropdown');
+  dropdown.classList.toggle('hidden');
+});
+
+// Close dropdown when clicking outside
+document.addEventListener('click', (event) => {
+  const menu = document.getElementById('menu-dropdown');
+  const menuBtn = document.getElementById('menu-btn');
+  if (!menu.contains(event.target) && !menuBtn.contains(event.target)) {
+    menu.classList.add('hidden');
+  }
+});
   
       // ✅ Change Start Bidding button too (if you have it on the page)
       if (startBiddingBtn) {

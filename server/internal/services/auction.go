@@ -109,8 +109,12 @@ func (a *AuctionService) DeleteAuction(ctx context.Context, id string) (string, 
 	ctx, cancel := context.WithTimeout(ctx, QueryDefaultContext)
 	defer cancel()
 
+	if err := a.bidRepo.DeleteBidsByAuction(ctx, id); err != nil {
+		return "", errs.ErrFailedToDeleteBids
+	}
+
 	if err := a.repo.DeleteAuction(ctx, id); err != nil {
-		return "", errs.ErrFailedToCreateAuction
+		return "", errs.ErrFailedToDeleteAuction
 	}
 
 	return "auction deleted successfully", nil

@@ -18,6 +18,7 @@ type UserRepository interface {
 	ValidateRefreshToken(ctx context.Context, refreshToken string) (string, error)
 	ChangePassword(ctx context.Context, pass, id string) error
 	GetUsers(ctx context.Context) (*[]models.User, error)
+	DeleteUser(ctx context.Context, id string) error
 }
 
 type AuctionRepository interface {

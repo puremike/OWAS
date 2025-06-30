@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Admin Login</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="js/admin_login.js" defer></script>
+  <script src="js/api.js" defer></script>
+</head>
+<body class="flex items-center justify-center min-h-screen bg-gray-100">
+  <div class="bg-white p-8 rounded shadow w-full max-w-sm">
+    <h1 class="text-2xl font-bold mb-4 text-center">Admin Login</h1>
+    <div class="mb-4">
+      <label class="block mb-1">Email</label>
+      <input type="email" id="email" class="border p-2 w-full rounded">
+    </div>
+    <div class="mb-4">
+      <label class="block mb-1">Password</label>
+      <input type="password" id="password" class="border p-2 w-full rounded">
+    </div>
+    <button id="login-btn" class="bg-blue-500 text-white w-full py-2 rounded hover:bg-blue-600">Login</button>
+    <div id="error-message" class="text-red-500 mt-2 hidden">Invalid login credentials</div>
+  </div>
+</body>
+</html>

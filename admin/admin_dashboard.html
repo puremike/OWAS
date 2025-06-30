@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Admin Dashboard</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="js/admin_logout.js" defer></script>
+  <script src="js/nav.js" defer></script>
+  <script src="js/api.js" defer></script>
+</head>
+<body class="bg-gray-100 min-h-screen flex flex-col items-center justify-center">
+  <nav class="bg-white shadow-md py-4 px-6 flex justify-between items-center">
+    <div id="nav-buttons" class="space-x-4"></div>
+  </nav>
+
+  <div class="bg-white p-8 rounded shadow-lg max-w-md w-full text-center">
+    <h1 class="text-3xl font-bold mb-6 text-gray-800">Admin Dashboard</h1>
+
+    <div class="space-y-4">
+      <a href="admin_auctions.html" class="block bg-blue-500 text-white py-2 rounded hover:bg-blue-600">Manage Auctions</a>
+      <a href="admin_users.html" class="block bg-green-500 text-white py-2 rounded hover:bg-green-600">Manage Users</a>
+      <a href="index.html" class="block bg-gray-500 text-white py-2 rounded hover:bg-gray-600">Admin Login</a>
+      <button id="logout-btn" class="block bg-red-500 text-white py-2 w-full rounded hover:bg-red-600">Logout</button>
+    </div>
+
+  </div>
+</body>
+</html>

@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>User Profile</title>
+    <script src="js/profile.js" defer></script>
+    <script src="js/api.js" defer></script>
+    <script defer src="js/nav.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100">
+    <nav class="bg-white shadow-md py-4 px-6 flex justify-between items-center">
+        <h1 class="text-2xl font-bold text-gray-800">🏆 Puremike OWAS</h1>
+        <div id="nav-buttons" class="space-x-4"></div>
+      </nav>
+
+    <main class="max-w-3xl mx-auto p-6 bg-white rounded shadow mt-10">
+        <div class="flex items-center mb-6">
+            <img id="user-avatar" src="https://ui-avatars.com/api/?name=User" alt="Avatar" class="w-16 h-16 rounded-full mr-4">
+            <h2 class="text-2xl font-bold">My Profile</h2>
+        </div>        
+        <h2 class="text-2xl font-bold mb-4">My Profile</h2>
+        <div id="user-info" class="mb-6"></div>
+
+        <h3 class="text-xl font-semibold mb-2">Change Password</h3>
+        <form id="password-form" class="space-y-3">
+            <input id="current-password" type="password" placeholder="Current Password" class="w-full p-2 border rounded">
+            <input id="new-password" type="password" placeholder="New Password" class="w-full p-2 border rounded">
+            <input id="confirm-password" type="password" placeholder="Confirm New Password" class="w-full p-2 border rounded">
+            <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded">Update Password</button>
+        </form>
+
+        <div id="message" class="mt-4 text-center hidden"></div>
+    </main>
+</body>
+</html>

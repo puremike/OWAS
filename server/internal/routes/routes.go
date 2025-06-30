@@ -29,7 +29,7 @@ func Routes(app *config.Application) http.Handler {
 	})
 
 	g.Use(cors.New(cors.Config{
-		AllowOrigins:     []string{pkg.GetEnvString("FRONTEND_URL", "http://localhost:3000")},
+		AllowOrigins:     []string{pkg.GetEnvString("FRONTEND_URL", "http://localhost:3000"), pkg.GetEnvString("ADMIN_FRONTEND_URL", "http://localhost:3500")},
 		AllowMethods:     []string{"PUT", "PATCH", "GET", "POST", "DELETE", "OPTIONS"},
 		AllowHeaders:     []string{"Accept", "Authorization", "Content-Type", "X-CSRF-Token"},
 		ExposeHeaders:    []string{"Content-Length"},
@@ -74,18 +74,22 @@ func Routes(app *config.Application) http.Handler {
 		user.POST("/signup", userHandler.RegisterUser)
 		user.POST("/login", middleware.RateLimiterMiddleware(app.SensitiveRateLimiter), userHandler.Login)
 		user.POST("/refresh", middleware.RateLimiterMiddleware(app.SensitiveRateLimiter), userHandler.RefreshToken)
+		user.POST("/admin/login", middleware.RateLimiterMiddleware(app.SensitiveRateLimiter), userHandler.AdminLogin)
 	}
 
 	authGroup := api.Group("/")
 	authGroup.Use(middleware.AuthMiddleware())
 	{
 		authGroup.POST("/logout", userHandler.Logout)
+		authGroup.POST("/admin/logout", userHandler.Logout)
 		authGroup.GET("/me", userHandler.MeProfile)
 		authGroup.GET("/:username", userHandler.UserProfile)
 		authGroup.PUT("/:username/update-profile", userHandler.UpdateProfile)
 		authGroup.PUT("/:username/change-password", userHandler.ChangePassword)
+		authGroup.DELETE("/users", userHandler.DeleteUser)
 
 		authGroup.GET("/admin/users", middlewares.AuthorizeRoles(true), userHandler.AdminGetUsers)
+		authGroup.DELETE("/admin/users/:userID", middlewares.AuthorizeRoles(true), userHandler.AdminDeleteUser)
 		authGroup.GET("/auctions", auctionHandler.GetAuctions)
 		authGroup.DELETE("/admin/auctions/:auctionID", middleware.AuctionMiddleware(), middlewares.AuthorizeRoles(true), auctionHandler.AdminDeleteAuction)
 

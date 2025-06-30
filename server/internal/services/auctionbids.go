@@ -156,29 +156,29 @@ func (a *AuctionService) PlaceBid(ctx context.Context, req *models.PlaceBidReque
 
 // CloseAuction method in your AuctionService
 // Now accepts the authenticated userID for authorization checks.
-func (a *AuctionService) CloseAuction(ctx context.Context, auctionID string, requestingUserID string) error {
+func (a *AuctionService) CloseAuction(ctx context.Context, auctionID string, requestingUserID string) (*models.WinnerResponse, error) {
 	auction, err := a.repo.GetAuctionById(ctx, auctionID)
 	if err != nil {
 		if errors.Is(err, errs.ErrAuctionNotFound) {
-			return errs.ErrAuctionNotFound
+			return nil, errs.ErrAuctionNotFound
 		}
-		return errors.New("failed to retrieve auction for closing")
+		return nil, errors.New("failed to retrieve auction for closing")
 	}
 
 	// Authorization
 	if auction.SellerID != requestingUserID {
-		return errs.ErrPermissionDenied
+		return nil, errs.ErrPermissionDenied
 	}
 
 	// Prevent re-closing
 	if auction.Status == "closed" {
-		return errs.ErrAuctionAlreadyClosed
+		return nil, errs.ErrAuctionAlreadyClosed
 	}
 
 	// Update status
 	auction.Status = "closed"
 	if err := a.repo.CloseAuction(ctx, auction.Status, auctionID); err != nil {
-		return errs.ErrFailedToUpdateAuction
+		return nil, errs.ErrFailedToUpdateAuction
 	}
 
 	// Determine the winner: highest bid
@@ -186,7 +186,7 @@ func (a *AuctionService) CloseAuction(ctx context.Context, auctionID string, req
 	if auction.CurrentPrice > auction.StartingPrice {
 		highestBid, err := a.bidRepo.GetHighestBid(ctx, auctionID)
 		if err != nil && !errors.Is(err, sql.ErrNoRows) {
-			return errors.New("failed to retrieve highest bid during auction close")
+			return nil, errors.New("failed to retrieve highest bid during auction close")
 		}
 		if highestBid != nil {
 			winnerID = highestBid.BidderID
@@ -210,14 +210,14 @@ func (a *AuctionService) CloseAuction(ctx context.Context, auctionID string, req
 			IsRead:    false,
 		}
 		if err := a.notRepo.CreateNotification(ctx, not); err != nil {
-			return fmt.Errorf("CreateNotification failed: %v", err)
+			return nil, fmt.Errorf("CreateNotification failed: %v", err)
 		}
 	}
 
 	// Notify other bidders
 	bidders, err := a.bidRepo.GetAllBidderIDsForAuction(ctx, auctionID)
 	if err != nil {
-		return errors.New("failed to retrieve all bidders for auction close")
+		return nil, errors.New("failed to retrieve all bidders for auction close")
 	}
 
 	uniqueBidders := make(map[string]struct{})
@@ -242,7 +242,7 @@ func (a *AuctionService) CloseAuction(ctx context.Context, auctionID string, req
 			IsRead:    false,
 		}
 		if err := a.notRepo.CreateNotification(ctx, not); err != nil {
-			return fmt.Errorf("CreateNotification failed: %v", err)
+			return nil, fmt.Errorf("CreateNotification failed: %v", err)
 		}
 	}
 
@@ -259,13 +259,19 @@ func (a *AuctionService) CloseAuction(ctx context.Context, auctionID string, req
 
 	// Delete bids
 	if err := a.bidRepo.DeleteBidsByAuction(ctx, auctionID); err != nil {
-		return errs.ErrFailedToDeleteBids
+		return nil, errs.ErrFailedToDeleteBids
 	}
 
 	// Delete notifications
 	if err := a.notRepo.DeleteNotificationByAuction(ctx, auctionID); err != nil {
-		return errs.ErrFailedToDeleteNotifications
+		return nil, errs.ErrFailedToDeleteNotifications
 	}
 
-	return nil
+	res := &models.WinnerResponse{
+		WinnerID:   winnerID,
+		WinningBid: auction.CurrentPrice,
+		Status:     auction.Status,
+	}
+
+	return res, nil
 }

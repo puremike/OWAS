@@ -47,3 +47,9 @@ const (
 	DutchAuction   = "dutch"
 	SealedAuction  = "sealed"
 )
+
+type WinnerResponse struct {
+	WinnerID   string  `json:"winner_id"`
+	WinningBid float64 `json:"winning_bid"`
+	Status     string  `json:"status"`
+}

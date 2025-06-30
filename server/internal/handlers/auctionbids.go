@@ -103,10 +103,17 @@ func (a *AuctionHandler) CloseAuction(c *gin.Context) {
 		return
 	}
 
-	if err := a.service.CloseAuction(c.Request.Context(), existingAuction.ID, existingAuction.SellerID); err != nil {
+	response, err := a.service.CloseAuction(c.Request.Context(), existingAuction.ID, existingAuction.SellerID)
+	if err != nil {
 		errs.MapServiceErrors(c, err)
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"message": "auction closed"})
+	res := &models.WinnerResponse{
+		WinnerID:   response.WinnerID,
+		WinningBid: response.WinningBid,
+		Status:     response.Status,
+	}
+
+	c.JSON(http.StatusOK, res)
 }

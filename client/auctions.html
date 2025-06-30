@@ -5,17 +5,24 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Auction List</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <script defer src="js/auctions.js"></script>
   <script defer src="js/api.js"></script>
+  <script defer src="js/nav.js"></script>
+  <script defer src="js/auctions.js"></script>
+  
 </head>
 <body class="bg-gray-100 text-gray-800">
 
-  <nav class="bg-white shadow-md py-4 px-6 flex justify-between items-center">
+    <nav class="bg-white shadow-md py-4 px-6 flex justify-between items-center">
+        <h1 class="text-2xl font-bold text-gray-800">🏆 Puremike OWAS</h1>
+        <div id="nav-buttons" class="space-x-4"></div>
+      </nav>
+
+  <!-- <nav class="bg-white shadow-md py-4 px-6 flex justify-between items-center">
     <h1 class="text-2xl font-bold text-gray-800"><a href="index.html">🏆Online Auction</a></h1>
     <div id="nav-buttons" class="space-x-4">
       <button id="logout-btn" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-red-600">Logout</button>
     </div>
-  </nav>
+  </nav> -->
 
   <main class="max-w-6xl mx-auto p-6">
     <h2 class="text-3xl font-bold mb-6">Available Auctions</h2>

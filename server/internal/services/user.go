@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net/http"
 	"strings"
 	"time"
 
@@ -294,4 +295,14 @@ func (u *UserService) GetUsers(ctx context.Context) (*[]models.UserResponse, err
 		})
 	}
 	return res, nil
+}
+
+func (u *UserService) DeleteUser(ctx context.Context, id string) (string, error) {
+	ctx, cancel := context.WithTimeout(ctx, QueryDefaultContext)
+	defer cancel()
+
+	if err := u.repo.DeleteUser(ctx, id); err != nil {
+		return "", errs.NewHTTPError("failed to delete user", http.StatusInternalServerError)
+	}
+	return "user deleted successfully", nil
 }

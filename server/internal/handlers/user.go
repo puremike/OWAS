@@ -111,6 +111,62 @@ func (u *UserHandler) Login(c *gin.Context) {
 	// c.SetCookie("refresh_token", user.RefreshToken, int(u.app.AppConfig.AuthConfig.RefreshTokenExp.Seconds()), "/", "", false, true)
 	// c.SetSameSite(http.SameSiteStrictMode)
 
+	u.setJwtCookie(c, user)
+
+	c.JSON(http.StatusOK, "login successful")
+}
+
+// AdminLogin godoc
+//
+//	@Summary		Login Admin
+//	@Description	Authenticates an admin user using email and password.
+//	@Description	Upon successful authentication, a short-lived **JWT (access token)** is set as an `HttpOnly` cookie named `jwt`.
+//	@Description	A long-lived **refresh token** is also set as an `HttpOnly` cookie named `refresh_token`.
+//	@Description	Both cookies are crucial for maintaining user session and subsequent authenticated requests.
+//	@Tags			Users
+//	@Accept			json
+//	@Produce		json
+//	@Param			payload	body		models.LoginRequest	true	"Login credentials"
+//	@Success		200		{object}	string				"login successful"
+//	@Success		200		{header}	string				Set-Cookie	"Two HttpOnly cookies are set: 'jwt' (access token) and 'refresh_token' (refresh token)."
+//	@Failure		400		{object}	gin.H				"Bad Request - invalid input"
+//	@Failure		401		{object}	gin.H				"Unauthorized - invalid credentials"
+//	@Failure		500		{object}	gin.H				"Internal Server Error"
+//	@Router			/admin/login [post]
+func (u *UserHandler) AdminLogin(c *gin.Context) {
+
+	var payload models.LoginRequest
+	if err := c.ShouldBindJSON(&payload); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	existingUser, err := u.app.Store.Users.GetUserByEmail(c.Request.Context(), payload.Email)
+	if err != nil {
+		if errors.Is(err, errs.ErrUserNotFound) {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "user not found"})
+			return
+		}
+		return
+	}
+
+	if !existingUser.IsAdmin {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "user is not an admin"})
+		return
+	}
+	user, err := u.service.Login(c.Request.Context(), &payload)
+	if err != nil {
+		errs.MapServiceErrors(c, err)
+		return
+	}
+
+	u.setJwtCookie(c, user)
+
+	c.JSON(http.StatusOK, "login successful")
+}
+
+func (u *UserHandler) setJwtCookie(c *gin.Context, user *models.LoginResponse) {
+
 	http.SetCookie(c.Writer, &http.Cookie{
 		Name:     "jwt",
 		Value:    user.Token,
@@ -130,8 +186,6 @@ func (u *UserHandler) Login(c *gin.Context) {
 		Secure:   false, // change to true in production
 		SameSite: http.SameSiteLaxMode,
 	})
-
-	c.JSON(http.StatusOK, "login successful")
 }
 
 // Logout godoc
@@ -439,4 +493,40 @@ func (u *UserHandler) AdminGetUsers(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, res)
+}
+
+func (u *UserHandler) DeleteUser(c *gin.Context) {
+
+	authUser, err := contexts.GetUserFromContext(c)
+	if authUser == nil || err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+		return
+	}
+
+	msg, err := u.service.DeleteUser(c.Request.Context(), authUser.ID)
+	if err != nil {
+		errs.MapServiceErrors(c, err)
+		return
+	}
+
+	c.JSON(http.StatusOK, msg)
+}
+
+func (u *UserHandler) AdminDeleteUser(c *gin.Context) {
+
+	id := c.Param("userID")
+
+	authUser, err := contexts.GetUserFromContext(c)
+	if authUser == nil || err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+		return
+	}
+
+	msg, err := u.service.DeleteUser(c.Request.Context(), id)
+	if err != nil {
+		errs.MapServiceErrors(c, err)
+		return
+	}
+
+	c.JSON(http.StatusOK, msg)
 }

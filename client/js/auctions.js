@@ -6,16 +6,18 @@ const pageSize = 10;
 let filters = { type: '', status: ''};
 
 document.addEventListener('DOMContentLoaded', () => {
+  renderNav(document.getElementById('nav-buttons'));
+  
     checkAuthAndLoadAuctions();
 
-    document.getElementById('logout-btn').addEventListener('click', async () => {
-        try {
-            await apiRequest('/logout', 'POST', null, true);
-            window.location.href = 'index.html';
-        } catch (error) {
-            showMessage('Error logging out.', 'error');
-        }
-    });
+    // document.getElementById('logout-btn').addEventListener('click', async () => {
+    //     try {
+    //         await apiRequest('/logout', 'POST', null, true);
+    //         window.location.href = 'index.html';
+    //     } catch (error) {
+    //         showMessage('Error logging out.', 'error');
+    //     }
+    // });
 
     document.getElementById('apply-filters').addEventListener('click', () => {
         filters.type = document.getElementById('type-filter').value;
@@ -69,6 +71,7 @@ async function loadAuctions() {
             const card = document.createElement('div');
             card.className = 'bg-white p-4 rounded shadow hover:shadow-lg transition';
 
+            const startTime = new Date(auction.start_time).getTime();
             const endTime = new Date(auction.end_time).getTime();
             const countdownId = `countdown-${auction.id}`;
             
@@ -89,7 +92,7 @@ async function loadAuctions() {
             container.appendChild(card);
 
             // Start countdown timer for this auction
-            startCountdown(endTime, countdownId);
+            startCountdown(startTime, endTime, countdownId);
         });
 
         document.getElementById('prev-page').disabled = currentPage === 1;
@@ -108,29 +111,47 @@ function showMessage(message, type) {
     msgDiv.classList.remove('hidden');
 }
 
-function startCountdown(endTime, countdownId) {
+function startCountdown(startTime, endTime, countdownId) {
+
+  let interval;
   function updateCountdown() {
-      const now = new Date().getTime();
-      const distance = endTime - now;
-      const countdownElement = document.getElementById(countdownId);
+    const now = new Date().getTime();
+    const countdownElement = document.getElementById(countdownId);
 
-      if (!countdownElement) return;
+    if (!countdownElement) {
+      if (interval) clearInterval(interval);
+      return;
+    }
 
-      if (distance <= 0) {
-          countdownElement.textContent = "Auction ended";
-          clearInterval(interval);
-          return;
-      }
+    const startDistance = startTime - now;
+    const endDistance = endTime - now;
 
-      const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-      const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
-      const seconds = Math.floor((distance % (1000 * 60)) / 1000);
-
+    if (startDistance > 0) {
+      // Auction has not started yet
+      const hours = Math.floor((startDistance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+      const minutes = Math.floor((startDistance % (1000 * 60 * 60)) / (1000 * 60));
+      const seconds = Math.floor((startDistance % (1000 * 60)) / 1000);
+      countdownElement.textContent = `Starts in: ${hours}h ${minutes}m ${seconds}s`;
+    } else if (endDistance > 0) {
+      // Auction is ongoing
+      const hours = Math.floor((endDistance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+      const minutes = Math.floor((endDistance % (1000 * 60 * 60)) / (1000 * 60));
+      const seconds = Math.floor((endDistance % (1000 * 60)) / 1000);
       countdownElement.textContent = `Time Left: ${hours}h ${minutes}m ${seconds}s`;
+    } else {
+      // Auction has ended
+      countdownElement.textContent = "Auction ended";
+
+      if (interval) {
+        clearInterval(interval); // Stop the countdown
+      }
+      
+    }
   }
 
   updateCountdown();
-  const interval = setInterval(updateCountdown, 1000);
+  interval = setInterval(updateCountdown, 1000)
+
 }
 
 
