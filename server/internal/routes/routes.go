@@ -67,6 +67,7 @@ func Routes(app *config.Application) http.Handler {
 			})
 		})
 		api.POST("/webhook/stripe", webHookHandler.StripeWebHookHandler)
+		api.GET("/stripe/session/:sessionID", webHookHandler.GetPaymentSession)
 	}
 
 	user := api.Group("/")
@@ -93,6 +94,8 @@ func Routes(app *config.Application) http.Handler {
 		authGroup.GET("/auctions", auctionHandler.GetAuctions)
 		authGroup.DELETE("/admin/auctions/:auctionID", middleware.AuctionMiddleware(), middlewares.AuthorizeRoles(true), auctionHandler.AdminDeleteAuction)
 
+		authGroup.GET("/auctions/won", auctionHandler.GetMyWonAuctions)
+
 		authGroup.POST("/auctions", auctionHandler.CreateAuction)
 		authGroup.GET("/auctions/:auctionID", middleware.AuctionMiddleware(), auctionHandler.GetAuctionById)
 		authGroup.PUT("/auctions/:auctionID", middleware.AuctionMiddleware(), auctionHandler.UpdateAuction)
@@ -105,7 +108,7 @@ func Routes(app *config.Application) http.Handler {
 
 		authGroup.GET("/ws", wsHandler.ServeWs)
 
-		authGroup.POST("/auctions/:auctionID/create-checkout-session", middleware.AuctionMiddleware(), webHookHandler.CreateCheckoutSessionHandler)
+		authGroup.POST("/auctions/:auctionID/stripe/create-checkout-session", middleware.AuctionMiddleware(), webHookHandler.CreateCheckoutSessionHandler)
 
 		authGroup.POST("/auctions/image_upload", imageHandler.UploadImage)
 	}

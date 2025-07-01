@@ -41,11 +41,11 @@ func (p *PaymentService) CreatePaymentCheckout(ctx context.Context, amount int64
 		return nil, errs.ErrAmountCannotBeNegative
 	}
 
-	amountInSmallestUnit := amount * 100 // convert to kobo
+	amountInSmallestUnit := amount * 100 // convert to cent
 	params := &stripe.CheckoutSessionParams{
 		LineItems: []*stripe.CheckoutSessionLineItemParams{{
 			PriceData: &stripe.CheckoutSessionLineItemPriceDataParams{
-				Currency: stripe.String(stripe.CurrencyNGN),
+				Currency: stripe.String(string(stripe.CurrencyUSD)),
 				ProductData: &stripe.CheckoutSessionLineItemPriceDataProductDataParams{
 					Name: stripe.String("Order Payment"),
 				},
@@ -66,11 +66,27 @@ func (p *PaymentService) CreatePaymentCheckout(ctx context.Context, amount int64
 	params.AddMetadata("order_id", orderID)
 	params.AddMetadata("buyer_id", buyerID)
 
+	// --- ADD THESE LOGS ---
+	log.Printf("DEBUG: CreatePaymentCheckout - About to add metadata. Incoming orderID: '%s', Incoming buyerID: '%s'", orderID, buyerID)
+
+	params.AddMetadata("order_id", orderID)
+	params.AddMetadata("buyer_id", buyerID)
+
+	// --- ADD THIS LOG to inspect params.Metadata *before* API call ---
+	if params.Metadata != nil {
+		log.Printf("DEBUG: CreatePaymentCheckout - Params metadata before API call: %+v", params.Metadata)
+	} else {
+		log.Println("DEBUG: CreatePaymentCheckout - Params metadata is nil before API call.")
+	}
+
 	session, err := session.New(params)
 	if err != nil {
 		log.Printf("failed to create Stripe checkout session: %v", err)
 		return nil, errs.ErrFailedToCreateStripeCheckout
 	}
+
+	// --- ADD THIS LOG to inspect session.Metadata *after* API call ---
+	log.Printf("DEBUG: Stripe Session Created - SessionID: %s, Metadata from Stripe response: %+v", session.ID, session.Metadata)
 
 	req := &models.Payment{
 		Amount:    float64(amount),
@@ -78,6 +94,7 @@ func (p *PaymentService) CreatePaymentCheckout(ctx context.Context, amount int64
 		BuyerID:   buyerID,
 		Status:    PaymentStatusPending,
 		AuctionID: auctionID,
+		SessionID: session.ID,
 	}
 
 	// create payment and save to DB
@@ -89,14 +106,18 @@ func (p *PaymentService) CreatePaymentCheckout(ctx context.Context, amount int64
 	return session, nil
 }
 
-func (p *PaymentService) GetPaymentStatus(sessionID string) (*stripe.CheckoutSession, error) {
-	session, err := session.Get(sessionID, nil)
-	if err != nil {
-		return nil, errs.ErrFailedToGetPaymentSession
-	}
+// func (p *PaymentService) GetPaymentStatus(sessionID string) (*stripe.CheckoutSession, error) {
+// 	session, err := session.Get(sessionID, nil)
+// 	if err != nil {
+// 		return nil, errs.ErrFailedToGetPaymentSession
+// 	}
 
-	return session, nil
-}
+// 	return session, nil
+// }
+
+// func (p *PaymentService) GetPayment(ctx context.Context, orderID, buyerID string) (*models.Payment, error) {
+// 	return p.repo.GetPayment(ctx, orderID, buyerID)
+// }
 
 func (p *PaymentService) HandleCheckoutSessionCompleted(ctx context.Context, event *stripe.Event, session *stripe.CheckoutSession) error {
 
@@ -120,7 +141,7 @@ func (p *PaymentService) HandleCheckoutSessionCompleted(ctx context.Context, eve
 
 	log.Printf("handling checkout session completed for session: %s, order: %s and user: %s", stripeSessionID, orderID, buyerID)
 
-	payment, err := p.repo.GetPayment(ctx, orderID, buyerID)
+	payment, err := p.repo.GetPayment(ctx, orderID)
 	if err != nil {
 		log.Printf("failed to get payment for order %s and user %s:", orderID, buyerID)
 		return errs.ErrFailedToGetPayment
@@ -165,10 +186,10 @@ func (p *PaymentService) HandlePaymentIntentSucceeded(ctx context.Context, event
 		return errs.ErrFailedToUnmarshalEvent
 	}
 
-	buyerID := pi.Metadata["buyer_id"]
+	// buyerID := pi.Metadata["buyer_id"]
 	orderID := pi.Metadata["order_id"]
 
-	payment, err := p.repo.GetPayment(ctx, orderID, buyerID)
+	payment, err := p.repo.GetPayment(ctx, orderID)
 	if err != nil {
 		log.Printf("failed to get payment: %v", err)
 		return errs.ErrFailedToGetPayment
@@ -204,10 +225,10 @@ func (p *PaymentService) HandlePaymentIntentFailed(ctx context.Context, event *s
 		return errs.ErrFailedToUnmarshalEvent
 	}
 
-	buyerID := pi.Metadata["buyer_id"]
+	//buyerID := pi.Metadata["buyer_id"]
 	orderID := pi.Metadata["order_id"]
 
-	payment, err := p.repo.GetPayment(ctx, orderID, buyerID)
+	payment, err := p.repo.GetPayment(ctx, orderID)
 	if err != nil {
 		log.Printf("failed to get payment: %v", err)
 		return errs.ErrFailedToGetPayment

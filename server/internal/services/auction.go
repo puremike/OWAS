@@ -182,3 +182,35 @@ func (a *AuctionService) GetAuctions(ctx context.Context, limit, offset int, fil
 
 	return res, nil
 }
+
+func (a *AuctionService) GetWonAuctionsByWinnerID(ctx context.Context, winnerID string) (*[]models.CreateAuctionResponse, error) {
+
+	ctx, cancel := context.WithTimeout(ctx, QueryDefaultContext)
+	defer cancel()
+
+	auctions, err := a.repo.GetWonAuctionsByWinnerID(ctx, winnerID)
+	if err != nil {
+		return &[]models.CreateAuctionResponse{}, errors.New("failed to retrieve auctions")
+	}
+
+	res := &[]models.CreateAuctionResponse{}
+
+	for _, auction := range *auctions {
+		*res = append(*res, models.CreateAuctionResponse{
+			ID:            auction.ID,
+			SellerID:      auction.SellerID,
+			Title:         auction.Title,
+			Description:   auction.Description,
+			StartingPrice: auction.StartingPrice,
+			CurrentPrice:  auction.CurrentPrice,
+			Type:          auction.Type,
+			Status:        auction.Status,
+			StartTime:     auction.StartTime,
+			EndTime:       auction.EndTime,
+			CreatedAt:     auction.CreatedAt,
+			ImagePath:     auction.ImagePath,
+		})
+	}
+
+	return res, nil
+}

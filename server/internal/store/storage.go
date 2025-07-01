@@ -28,6 +28,7 @@ type AuctionRepository interface {
 	CloseAuction(ctx context.Context, status, id string) error
 	UpdateAuction(ctx context.Context, auction *models.Auction, id string) error
 	DeleteAuction(ctx context.Context, id string) error
+	GetWonAuctionsByWinnerID(ctx context.Context, winnerID string) (*[]models.Auction, error)
 }
 
 type BidRepository interface {
@@ -42,7 +43,7 @@ type BidRepository interface {
 
 type PaymentRepository interface {
 	CreatePayment(ctx context.Context, payment *models.Payment) error
-	GetPayment(ctx context.Context, orderID, buyerID string) (*models.Payment, error)
+	GetPayment(ctx context.Context, orderID string) (*models.Payment, error)
 	UpdatePayment(ctx context.Context, paymentStatus, id string) error
 }
 

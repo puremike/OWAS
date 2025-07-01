@@ -13,6 +13,7 @@ function renderNav(navButtons) {
             <a href="index.html" class="block px-4 py-2 text-gray-800 hover:bg-blue-500 hover:text-white">Puremike OWAS</a>
           <a href="create_auction.html" class="block px-4 py-2 text-gray-800 hover:bg-blue-500 hover:text-white">Create Auctions</a>
           <a href="auctions.html" class="block px-4 py-2 text-gray-800 hover:bg-blue-500 hover:text-white">View Auctions</a>
+           <a href="my_auctions.html" class="block px-4 py-2 text-gray-800 hover:bg-blue-500 hover:text-white">My Won Auctions</a>
           <a href="profile.html" class="block px-4 py-2 text-gray-800 hover:bg-blue-500 hover:text-white">Profile</a>
           <button id="logout-btn" class="block w-full text-left px-4 py-2 text-gray-800 hover:bg-red-500 hover:text-white">Logout</button>
         </div>

@@ -1,0 +1,2 @@
+ALTER TABLE payment
+ADD COLUMN session_id TEXT UNIQUE NOT NULL DEFAULT 'default';

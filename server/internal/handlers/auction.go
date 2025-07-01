@@ -368,3 +368,51 @@ func (a *AuctionHandler) GetAuctions(c *gin.Context) {
 
 	c.JSON(http.StatusOK, res)
 }
+
+// GetMyWonAuctions godoc
+//
+//	@Summary		Get My Won Auctions
+//	@Description	Retrieves a list of auctions the user has won.
+//	@Tags			Auctions
+//	@Accept			json
+//	@Produce		json
+//	@Success		200			{array}		models.CreateAuctionResponse	"List of auctions"
+//	@Failure		401			{object}	gin.H							"Unauthorized - user not authenticated"
+//	@Failure		500			{object}	gin.H							"Internal Server Error - failed to retrieve auctions"
+//	@Router			/auctions/won [get]
+//
+//	@Security		jwtCookieAuth
+func (a *AuctionHandler) GetMyWonAuctions(c *gin.Context) {
+	authUser, err := contexts.GetUserFromContext(c)
+	if authUser == nil || err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+		return
+	}
+
+	auctions, err := a.service.GetWonAuctionsByWinnerID(c.Request.Context(), authUser.ID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to load won auctions"})
+		return
+	}
+
+	res := &[]models.CreateAuctionResponse{}
+
+	for _, auction := range *auctions {
+		*res = append(*res, models.CreateAuctionResponse{
+			ID:            auction.ID,
+			SellerID:      auction.SellerID,
+			Title:         auction.Title,
+			Description:   auction.Description,
+			StartingPrice: auction.StartingPrice,
+			CurrentPrice:  auction.CurrentPrice,
+			Type:          auction.Type,
+			Status:        auction.Status,
+			StartTime:     auction.StartTime,
+			EndTime:       auction.EndTime,
+			CreatedAt:     auction.CreatedAt,
+			ImagePath:     auction.ImagePath,
+		})
+	}
+
+	c.JSON(http.StatusOK, res)
+}

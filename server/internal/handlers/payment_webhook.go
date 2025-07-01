@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"encoding/json"
 	"errors"
 	"io"
 	"log"
@@ -16,6 +15,7 @@ import (
 	"github.com/puremike/online_auction_api/internal/services"
 	"github.com/puremike/online_auction_api/internal/store"
 	"github.com/stripe/stripe-go/v82"
+	"github.com/stripe/stripe-go/v82/checkout/session"
 	"github.com/stripe/stripe-go/v82/webhook"
 )
 
@@ -88,12 +88,6 @@ func (w *WebHookHandler) StripeWebHookHandler(c *gin.Context) {
 	case "checkout.session.completed":
 		var session stripe.CheckoutSession
 
-		if err := json.Unmarshal(event.Data.Raw, &session); err != nil {
-			log.Printf("failed to unmarshal event data: %v", err)
-			c.JSON(http.StatusBadRequest, gin.H{"error": "failed to unmarshal event data"})
-			return
-		}
-
 		if err := w.service.HandleCheckoutSessionCompleted(c, &event, &session); err != nil {
 			log.Printf("failed to handle checkout.session.completed event: %v", err)
 			errs.MapServiceErrors(c, err)
@@ -102,11 +96,6 @@ func (w *WebHookHandler) StripeWebHookHandler(c *gin.Context) {
 
 	case "payment_intent.succeeded":
 		var pi stripe.PaymentIntent
-		if err := json.Unmarshal(event.Data.Raw, &pi); err != nil {
-			log.Printf("failed to unmarshal event data: %v", err)
-			c.JSON(http.StatusBadRequest, gin.H{"error": "failed to unmarshal event data"})
-			return
-		}
 
 		if err := w.service.HandlePaymentIntentSucceeded(c, &event, &pi); err != nil {
 			log.Printf("failed to handle payment_intent.succeeded event: %v", err)
@@ -116,11 +105,6 @@ func (w *WebHookHandler) StripeWebHookHandler(c *gin.Context) {
 
 	case "payment_intent.payment_failed":
 		var pi stripe.PaymentIntent
-		if err := json.Unmarshal(event.Data.Raw, &pi); err != nil {
-			log.Printf("failed to unmarshal event data: %v", err)
-			c.JSON(http.StatusBadRequest, gin.H{"error": "failed to unmarshal event data"})
-			return
-		}
 
 		if err := w.service.HandlePaymentIntentFailed(c, &event, &pi); err != nil {
 			log.Printf("failed to handle payment_intent.payment_failed event: %v", err)
@@ -137,6 +121,36 @@ func (w *WebHookHandler) StripeWebHookHandler(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "success"})
 }
 
+func (w *WebHookHandler) GetPaymentSession(c *gin.Context) {
+
+	// authUser, err := contexts.GetAuctionFromContext(c)
+	// if err != nil && authUser == nil {
+	// 	c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+	// }
+
+	sessionID := c.Param("sessionID")
+
+	stripeSession, err := session.Get(sessionID, nil)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to retrieve Stripe session"})
+		return
+	}
+
+	// if stripeSession.Metadata["buyer_id"] != authUser.ID {
+	// 	c.JSON(403, gin.H{"error": "Access denied"})
+	// 	return
+	// }
+
+	c.JSON(http.StatusOK, gin.H{
+		"id":             stripeSession.ID,
+		"payment_status": stripeSession.PaymentStatus,
+		"amount_total":   stripeSession.AmountTotal,
+		"currency":       stripeSession.Currency,
+		"customer_email": stripeSession.CustomerEmail,
+		"metadata":       stripeSession.Metadata,
+	})
+}
+
 // CreateCheckoutSessionHandler godoc
 //
 //	@Summary		Create Stripe Checkout Session for an auction
@@ -144,13 +158,13 @@ func (w *WebHookHandler) StripeWebHookHandler(c *gin.Context) {
 //	@Tags			Payments
 //	@Accept			json
 //	@Produce		json
-//	@Param			auction_id	path		string							true	"ID of the auction to create a checkout session for"
+//	@Param			auctionID	path		string							true	"ID of the auction to create a checkout session for"
 //	@Success		201			{object}	models.CreatePaymentResponse	"Stripe Checkout Session created successfully"
 //	@Failure		400			{object}	gin.H							"Bad Request - invalid input"
 //	@Failure		401			{object}	gin.H							"Unauthorized - user not authenticated"
 //	@Failure		404			{object}	gin.H							"Not Found - auction not found"
 //	@Failure		500			{object}	gin.H							"Internal Server Error - failed to create Stripe Checkout Session"
-//	@Router			/auctions/{auctionID}/create-checkout-session [post]
+//	@Router			/auctions/{auctionID}/stripe/create-checkout-session [post]
 //
 //	@Security		jwtCookieAuth
 func (w *WebHookHandler) CreateCheckoutSessionHandler(c *gin.Context) {

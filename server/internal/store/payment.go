@@ -16,7 +16,7 @@ func (p *PaymentStore) CreatePayment(ctx context.Context, payment *models.Paymen
 	ctx, cancel := context.WithTimeout(ctx, QueryBackgroundTimeout)
 	defer cancel()
 
-	query := `INSERT INTO payment (auction_id, buyer_id, order_id, amount, status) VALUES ($1, $2, $3, $4, $5)`
+	query := `INSERT INTO payment (auction_id, buyer_id, order_id, session_id, amount, status) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id`
 
 	tx, err := p.db.BeginTx(ctx, nil)
 	if err != nil {
@@ -25,7 +25,7 @@ func (p *PaymentStore) CreatePayment(ctx context.Context, payment *models.Paymen
 
 	defer tx.Rollback()
 
-	if err = tx.QueryRowContext(ctx, query, payment.AuctionID, payment.BuyerID, payment.OrderID, payment.Amount, payment.Status).Scan(&payment.ID); err != nil {
+	if err = tx.QueryRowContext(ctx, query, payment.AuctionID, payment.BuyerID, payment.OrderID, payment.SessionID, payment.Amount, payment.Status).Scan(&payment.ID); err != nil {
 		return err
 	}
 
@@ -36,15 +36,15 @@ func (p *PaymentStore) CreatePayment(ctx context.Context, payment *models.Paymen
 	return nil
 }
 
-func (p *PaymentStore) GetPayment(ctx context.Context, orderID, buyerID string) (*models.Payment, error) {
+func (p *PaymentStore) GetPayment(ctx context.Context, orderID string) (*models.Payment, error) {
 	ctx, cancel := context.WithTimeout(ctx, QueryBackgroundTimeout)
 	defer cancel()
 
 	var payment models.Payment
 
-	query := `SELECT id, auction_id, buyer_id, order_id, amount, status FROM payment WHERE order_id = $1 AND buyer_id = $2`
+	query := `SELECT id, auction_id, buyer_id, order_id, session_id, amount, status FROM payment WHERE order_id = $1`
 
-	if err := p.db.QueryRowContext(ctx, query, orderID, buyerID).Scan(&payment.ID, &payment.AuctionID, &payment.BuyerID, &payment.OrderID, &payment.Amount, &payment.Status, &payment.CreatedAt); err != nil {
+	if err := p.db.QueryRowContext(ctx, query, orderID).Scan(&payment.ID, &payment.AuctionID, &payment.BuyerID, &payment.OrderID, &payment.SessionID, &payment.Amount, &payment.Status, &payment.CreatedAt); err != nil {
 		return nil, err
 	}
 

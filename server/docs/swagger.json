@@ -71,6 +71,58 @@
                 }
             }
         },
+        "/admin/login": {
+            "post": {
+                "description": "Authenticates an admin user using email and password.\nUpon successful authentication, a short-lived **JWT (access token)** is set as an `HttpOnly` cookie named `jwt`.\nA long-lived **refresh token** is also set as an `HttpOnly` cookie named `refresh_token`.\nBoth cookies are crucial for maintaining user session and subsequent authenticated requests.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Users"
+                ],
+                "summary": "Login Admin",
+                "parameters": [
+                    {
+                        "description": "Login credentials",
+                        "name": "payload",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/github_com_puremike_online_auction_api_internal_models.LoginRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Two HttpOnly cookies are set: 'jwt' (access token) and 'refresh_token' (refresh token).",
+                        "schema": {
+                            "type": "header"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request - invalid input",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized - invalid credentials",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    }
+                }
+            }
+        },
         "/admin/users": {
             "get": {
                 "security": [
@@ -249,6 +301,49 @@
                     },
                     "500": {
                         "description": "Internal Server Error - failed to process file upload",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    }
+                }
+            }
+        },
+        "/auctions/won": {
+            "get": {
+                "security": [
+                    {
+                        "jwtCookieAuth": []
+                    }
+                ],
+                "description": "Retrieves a list of auctions the user has won.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Auctions"
+                ],
+                "summary": "Get My Won Auctions",
+                "responses": {
+                    "200": {
+                        "description": "List of auctions",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/github_com_puremike_online_auction_api_internal_models.CreateAuctionResponse"
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized - user not authenticated",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error - failed to retrieve auctions",
                         "schema": {
                             "$ref": "#/definitions/gin.H"
                         }
@@ -1227,6 +1322,9 @@
                     "type": "string"
                 },
                 "id": {
+                    "type": "string"
+                },
+                "image_path": {
                     "type": "string"
                 },
                 "seller_id": {

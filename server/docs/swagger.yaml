@@ -102,6 +102,8 @@ definitions:
         type: string
       id:
         type: string
+      image_path:
+        type: string
       seller_id:
         type: string
       start_time:
@@ -404,6 +406,45 @@ paths:
       summary: Admin Delete Auction
       tags:
       - Auctions
+  /admin/login:
+    post:
+      consumes:
+      - application/json
+      description: |-
+        Authenticates an admin user using email and password.
+        Upon successful authentication, a short-lived **JWT (access token)** is set as an `HttpOnly` cookie named `jwt`.
+        A long-lived **refresh token** is also set as an `HttpOnly` cookie named `refresh_token`.
+        Both cookies are crucial for maintaining user session and subsequent authenticated requests.
+      parameters:
+      - description: Login credentials
+        in: body
+        name: payload
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_puremike_online_auction_api_internal_models.LoginRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 'Two HttpOnly cookies are set: ''jwt'' (access token) and ''refresh_token''
+            (refresh token).'
+          schema:
+            type: header
+        "400":
+          description: Bad Request - invalid input
+          schema:
+            $ref: '#/definitions/gin.H'
+        "401":
+          description: Unauthorized - invalid credentials
+          schema:
+            $ref: '#/definitions/gin.H'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/gin.H'
+      summary: Login Admin
+      tags:
+      - Users
   /admin/users:
     get:
       consumes:
@@ -756,6 +797,33 @@ paths:
       summary: Upload Image
       tags:
       - Images
+  /auctions/won:
+    get:
+      consumes:
+      - application/json
+      description: Retrieves a list of auctions the user has won.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: List of auctions
+          schema:
+            items:
+              $ref: '#/definitions/github_com_puremike_online_auction_api_internal_models.CreateAuctionResponse'
+            type: array
+        "401":
+          description: Unauthorized - user not authenticated
+          schema:
+            $ref: '#/definitions/gin.H'
+        "500":
+          description: Internal Server Error - failed to retrieve auctions
+          schema:
+            $ref: '#/definitions/gin.H'
+      security:
+      - jwtCookieAuth: []
+      summary: Get My Won Auctions
+      tags:
+      - Auctions
   /contact-support:
     post:
       consumes:

@@ -182,3 +182,37 @@ func (a *AuctionStore) DeleteAuction(ctx context.Context, id string) error {
 
 	return nil
 }
+
+func (a *AuctionStore) GetWonAuctionsByWinnerID(ctx context.Context, winnerID string) (*[]models.Auction, error) {
+
+	ctx, cancel := context.WithTimeout(ctx, QueryBackgroundTimeout)
+	defer cancel()
+
+	query := `SELECT id, seller_id, winner_id, title, description, starting_price, current_price, type, status, start_time, end_time, image_path, created_at FROM auctions WHERE winner_id = $1`
+
+	rows, err := a.db.QueryContext(ctx, query, winnerID)
+	if err != nil {
+		return nil, err
+	}
+
+	defer rows.Close()
+
+	var auctions []models.Auction
+
+	for rows.Next() {
+		var a models.Auction
+		err := rows.Scan(&a.ID, &a.SellerID, &a.WinnerID, &a.Title, &a.Description, &a.StartingPrice, &a.CurrentPrice, &a.Type, &a.Status, &a.StartTime, &a.EndTime, &a.ImagePath, &a.CreatedAt)
+		if err != nil {
+			return nil, err
+		}
+
+		auctions = append(auctions, a)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, err
+
+	}
+
+	return &auctions, nil
+}
