@@ -6,6 +6,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -114,13 +115,14 @@ func (w *WebHookHandler) StripeWebHookHandler(c *gin.Context) {
 
 	default:
 		log.Printf("unhandled event type: %s", event.Type)
-		c.JSON(http.StatusBadRequest, gin.H{"error": "unhandled event type"})
+		c.JSON(http.StatusOK, gin.H{"error": "unhandled event type"})
 		return
 	}
 
 	c.JSON(http.StatusOK, gin.H{"message": "success"})
 }
 
+// used to retrieve the payment session and return it to the frontend - successURL
 func (w *WebHookHandler) GetPaymentSession(c *gin.Context) {
 
 	// authUser, err := contexts.GetAuctionFromContext(c)
@@ -204,4 +206,54 @@ func (w *WebHookHandler) CreateCheckoutSessionHandler(c *gin.Context) {
 	})
 
 	log.Printf("successfully created Stripe Checkout Session for Order %s, Buyer %s. URL: %s", orderID, authUser.ID, stripeSession.URL)
+}
+
+// GetPayment godoc
+//
+//	@Summary		Get a Payment by Order ID
+//	@Description	Get a Payment by Order ID
+//	@Tags			Payments
+//	@Accept			json
+//	@Produce		json
+//	@Param			orderId	path		string	true	"Order ID"
+//	@Success		200		{object}	models.Payment	"Payment retrieved successfully"
+//	@Failure		400		{object}	gin.H		"Bad Request - invalid input"
+//	@Failure		401		{object}	gin.H		"Unauthorized - user not authenticated"
+//	@Failure		404		{object}	gin.H		"Not Found - payment not found"
+//	@Failure		500		{object}	gin.H		"Internal Server Error - failed to retrieve payment"
+//	@Router			/payments/{orderId} [get]
+//
+//	@Security		jwtCookieAuth
+func (w *WebHookHandler) GetPayment(c *gin.Context) {
+	authUser, err := contexts.GetUserFromContext(c)
+	if authUser == nil || err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+		return
+	}
+
+	orderId := c.Param("orderID")
+	log.Printf("Fetching payment for orderId: '%s'", orderId)
+
+	payment, err := w.service.GetPayment(c.Request.Context(), orderId, authUser.ID)
+	if err != nil {
+		log.Printf("failed to get payment: %v", err)
+		errs.MapServiceErrors(c, err)
+		return
+	}
+
+	c.JSON(http.StatusOK, payment)
+}
+
+func (w *WebHookHandler) UpdateAuctionPayment(c *gin.Context) {
+	auctionID := c.Param("auctionID")
+
+	paymentStatus, _ := strconv.ParseBool(c.Query("status"))
+
+	if err := w.service.UpdateAuctionPayment(c.Request.Context(), paymentStatus, auctionID); err != nil {
+		log.Printf("failed to get payment: %v", err)
+		errs.MapServiceErrors(c, err)
+		return
+	}
+
+	c.JSON(http.StatusOK, "updated")
 }

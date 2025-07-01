@@ -34,7 +34,7 @@ func (a *AuctionService) CreateAuction(ctx context.Context, req *models.Auction)
 	ctx, cancel := context.WithTimeout(ctx, QueryDefaultContext)
 	defer cancel()
 
-	if req.Title == "" || req.Description == "" || req.StartingPrice < 1 || req.Type == "" || req.Status == "" || req.StartTime.IsZero() || req.EndTime.IsZero() || req.SellerID == "" {
+	if req.Title == "" || req.Description == "" || req.StartingPrice < 1 || req.Type == "" || req.Category == "" || req.Status == "" || req.StartTime.IsZero() || req.EndTime.IsZero() || req.SellerID == "" {
 		return &models.CreateAuctionResponse{}, errs.ErrInvalidAuctionDetails
 	}
 
@@ -50,6 +50,8 @@ func (a *AuctionService) CreateAuction(ctx context.Context, req *models.Auction)
 		SellerID:      req.SellerID,
 		WinnerID:      req.SellerID,
 		ImagePath:     req.ImagePath,
+		Category:      req.Category,
+		IsPaid:        false,
 	}
 
 	createdAuction, err := a.repo.CreateAuction(ctx, auction)
@@ -70,6 +72,7 @@ func (a *AuctionService) CreateAuction(ctx context.Context, req *models.Auction)
 		EndTime:       createdAuction.EndTime,
 		CreatedAt:     createdAuction.CreatedAt,
 		ImagePath:     createdAuction.ImagePath,
+		Category:      createdAuction.Category,
 	}
 
 	return res, nil
@@ -177,6 +180,8 @@ func (a *AuctionService) GetAuctions(ctx context.Context, limit, offset int, fil
 			EndTime:       auction.EndTime,
 			CreatedAt:     auction.CreatedAt,
 			ImagePath:     auction.ImagePath,
+			Category:      auction.Category,
+			IsPaid:        auction.IsPaid,
 		})
 	}
 
@@ -209,6 +214,7 @@ func (a *AuctionService) GetWonAuctionsByWinnerID(ctx context.Context, winnerID 
 			EndTime:       auction.EndTime,
 			CreatedAt:     auction.CreatedAt,
 			ImagePath:     auction.ImagePath,
+			IsPaid:        auction.IsPaid,
 		})
 	}
 

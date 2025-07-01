@@ -63,7 +63,7 @@ func (a *AuctionStore) GetAuctions(ctx context.Context, limit, offset int, filte
 
 	var auctions []models.Auction
 
-	query := `SELECT id, seller_id, title, description, starting_price, current_price, type, status, start_time, end_time, image_path, created_at FROM auctions WHERE 1=1`
+	query := `SELECT id, seller_id, title, description, starting_price, current_price, type, status, start_time, end_time, image_path, category, is_paid, created_at FROM auctions WHERE 1=1`
 
 	args := []any{}
 
@@ -74,6 +74,11 @@ func (a *AuctionStore) GetAuctions(ctx context.Context, limit, offset int, filte
 	if filter.Status != "" {
 		query += ` AND status = $` + strconv.Itoa(len(args)+1)
 		args = append(args, filter.Status)
+	}
+
+	if filter.Category != "" {
+		query += ` AND category = $` + strconv.Itoa(len(args)+1)
+		args = append(args, filter.Category)
 	}
 
 	if filter.StartingPrice != 0 {
@@ -94,7 +99,7 @@ func (a *AuctionStore) GetAuctions(ctx context.Context, limit, offset int, filte
 	for rows.Next() {
 		var a models.Auction
 
-		if err := rows.Scan(&a.ID, &a.SellerID, &a.Title, &a.Description, &a.StartingPrice, &a.CurrentPrice, &a.Type, &a.Status, &a.StartTime, &a.EndTime, &a.ImagePath, &a.CreatedAt); err != nil {
+		if err := rows.Scan(&a.ID, &a.SellerID, &a.Title, &a.Description, &a.StartingPrice, &a.CurrentPrice, &a.Type, &a.Status, &a.StartTime, &a.EndTime, &a.ImagePath, &a.Category, &a.IsPaid, &a.CreatedAt); err != nil {
 			return nil, err
 		}
 
@@ -114,7 +119,7 @@ func (a *AuctionStore) CreateAuction(ctx context.Context, auction *models.Auctio
 	ctx, cancel := context.WithTimeout(ctx, QueryBackgroundTimeout)
 	defer cancel()
 
-	query := `INSERT INTO auctions (seller_id, winner_id, title, description, starting_price, current_price, type, status, start_time, end_time, image_path) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) RETURNING id, seller_id, winner_id, title, description, starting_price, current_price, type, status, start_time, end_time, image_path, created_at`
+	query := `INSERT INTO auctions (seller_id, winner_id, title, description, starting_price, current_price, type, status, start_time, end_time, image_path, category, is_paid) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13) RETURNING id, seller_id, winner_id, title, description, starting_price, current_price, type, status, start_time, end_time, image_path, category, is_paid, created_at`
 
 	tx, err := a.db.BeginTx(ctx, nil)
 	if err != nil {
@@ -123,7 +128,7 @@ func (a *AuctionStore) CreateAuction(ctx context.Context, auction *models.Auctio
 
 	defer tx.Rollback()
 
-	if err = tx.QueryRowContext(ctx, query, auction.SellerID, auction.WinnerID, auction.Title, auction.Description, auction.StartingPrice, auction.CurrentPrice, auction.Type, auction.Status, auction.StartTime, auction.EndTime, auction.ImagePath).Scan(&auction.ID, &auction.SellerID, &auction.WinnerID, &auction.Title, &auction.Description, &auction.StartingPrice, &auction.CurrentPrice, &auction.Type, &auction.Status, &auction.StartTime, &auction.EndTime, &auction.ImagePath, &auction.CreatedAt); err != nil {
+	if err = tx.QueryRowContext(ctx, query, auction.SellerID, auction.WinnerID, auction.Title, auction.Description, auction.StartingPrice, auction.CurrentPrice, auction.Type, auction.Status, auction.StartTime, auction.EndTime, auction.ImagePath, auction.Category, auction.IsPaid).Scan(&auction.ID, &auction.SellerID, &auction.WinnerID, &auction.Title, &auction.Description, &auction.StartingPrice, &auction.CurrentPrice, &auction.Type, &auction.Status, &auction.StartTime, &auction.EndTime, &auction.ImagePath, &auction.Category, &auction.IsPaid, &auction.CreatedAt); err != nil {
 		return nil, err
 	}
 
@@ -188,7 +193,7 @@ func (a *AuctionStore) GetWonAuctionsByWinnerID(ctx context.Context, winnerID st
 	ctx, cancel := context.WithTimeout(ctx, QueryBackgroundTimeout)
 	defer cancel()
 
-	query := `SELECT id, seller_id, winner_id, title, description, starting_price, current_price, type, status, start_time, end_time, image_path, created_at FROM auctions WHERE winner_id = $1`
+	query := `SELECT id, seller_id, winner_id, title, description, starting_price, current_price, type, status, start_time, end_time, image_path, is_paid, created_at FROM auctions WHERE winner_id = $1`
 
 	rows, err := a.db.QueryContext(ctx, query, winnerID)
 	if err != nil {
@@ -201,7 +206,7 @@ func (a *AuctionStore) GetWonAuctionsByWinnerID(ctx context.Context, winnerID st
 
 	for rows.Next() {
 		var a models.Auction
-		err := rows.Scan(&a.ID, &a.SellerID, &a.WinnerID, &a.Title, &a.Description, &a.StartingPrice, &a.CurrentPrice, &a.Type, &a.Status, &a.StartTime, &a.EndTime, &a.ImagePath, &a.CreatedAt)
+		err := rows.Scan(&a.ID, &a.SellerID, &a.WinnerID, &a.Title, &a.Description, &a.StartingPrice, &a.CurrentPrice, &a.Type, &a.Status, &a.StartTime, &a.EndTime, &a.ImagePath, &a.IsPaid, &a.CreatedAt)
 		if err != nil {
 			return nil, err
 		}
@@ -215,4 +220,28 @@ func (a *AuctionStore) GetWonAuctionsByWinnerID(ctx context.Context, winnerID st
 	}
 
 	return &auctions, nil
+}
+
+func (a *AuctionStore) UpdateAuctionPaymentStatus(ctx context.Context, isPaid bool, id string) error {
+	ctx, cancel := context.WithTimeout(ctx, QueryBackgroundTimeout)
+	defer cancel()
+
+	query := `UPDATE auctions SET is_paid = $1 WHERE id = $2`
+
+	tx, err := a.db.BeginTx(ctx, nil)
+	if err != nil {
+		return err
+	}
+
+	defer tx.Rollback()
+
+	if _, err = tx.ExecContext(ctx, query, isPaid, id); err != nil {
+		return err
+	}
+
+	if err = tx.Commit(); err != nil {
+		return err
+	}
+
+	return nil
 }

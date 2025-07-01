@@ -3,7 +3,7 @@ console.log("✅ auctions.js is running");
 let currentPage = 1;
 const pageSize = 10;
 
-let filters = { type: '', status: ''};
+let filters = { type: '', status: '', category: '' };
 
 document.addEventListener('DOMContentLoaded', () => {
   renderNav(document.getElementById('nav-buttons'));
@@ -22,6 +22,7 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('apply-filters').addEventListener('click', () => {
         filters.type = document.getElementById('type-filter').value;
         filters.status = document.getElementById('status-filter').value;
+        filters.category = document.getElementById('category-filter').value;
 
         currentPage = 1;
         loadAuctions();
@@ -54,6 +55,7 @@ async function loadAuctions() {
     try {
         const query = `limit=${pageSize}&offset=${(currentPage - 1) * pageSize}` +
                       `&type=${encodeURIComponent(filters.type)}` +
+                      `&category=${encodeURIComponent(filters.category)}` +
                       `&status=${encodeURIComponent(filters.status)}`;
 
         const auctions = await apiRequest(`/auctions?${query}`, 'GET', null, true);

@@ -3,6 +3,7 @@ package store
 import (
 	"context"
 	"database/sql"
+	"log"
 
 	"github.com/puremike/online_auction_api/internal/models"
 )
@@ -36,15 +37,16 @@ func (p *PaymentStore) CreatePayment(ctx context.Context, payment *models.Paymen
 	return nil
 }
 
-func (p *PaymentStore) GetPayment(ctx context.Context, orderID string) (*models.Payment, error) {
+func (p *PaymentStore) GetPayment(ctx context.Context, orderID, buyerID string) (*models.Payment, error) {
 	ctx, cancel := context.WithTimeout(ctx, QueryBackgroundTimeout)
 	defer cancel()
 
 	var payment models.Payment
 
-	query := `SELECT id, auction_id, buyer_id, order_id, session_id, amount, status FROM payment WHERE order_id = $1`
+	query := `SELECT id, auction_id, buyer_id, order_id, session_id, amount, status, created_at FROM payment WHERE order_id = $1 AND buyer_id = $2`
 
-	if err := p.db.QueryRowContext(ctx, query, orderID).Scan(&payment.ID, &payment.AuctionID, &payment.BuyerID, &payment.OrderID, &payment.SessionID, &payment.Amount, &payment.Status, &payment.CreatedAt); err != nil {
+	if err := p.db.QueryRowContext(ctx, query, orderID, buyerID).Scan(&payment.ID, &payment.AuctionID, &payment.BuyerID, &payment.OrderID, &payment.SessionID, &payment.Amount, &payment.Status, &payment.CreatedAt); err != nil {
+		log.Printf("query failed: %v", err)
 		return nil, err
 	}
 
@@ -66,6 +68,31 @@ func (p *PaymentStore) UpdatePayment(ctx context.Context, paymentStatus, id stri
 	defer tx.Rollback()
 
 	if _, err := tx.ExecContext(ctx, query, paymentStatus, id); err != nil {
+		return err
+	}
+
+	if err = tx.Commit(); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (p *PaymentStore) UpdateAuctionPaymentStatus(ctx context.Context, isPaid bool, id string) error {
+	ctx, cancel := context.WithTimeout(ctx, QueryBackgroundTimeout)
+	defer cancel()
+
+	query := `UPDATE auctions SET is_paid = $1 WHERE id = $2`
+
+	tx, err := p.db.BeginTx(ctx, nil)
+	if err != nil {
+		log.Printf("query failed: %v", err)
+		return err
+	}
+
+	defer tx.Rollback()
+
+	if _, err = tx.ExecContext(ctx, query, isPaid, id); err != nil {
 		return err
 	}
 

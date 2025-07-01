@@ -1,0 +1,2 @@
+ALTER TABLE auctions
+ADD COLUMN category TEXT NOT NULL DEFAULT 'mobile';

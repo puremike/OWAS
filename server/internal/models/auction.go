@@ -16,6 +16,8 @@ type Auction struct {
 	ImagePath     string    `json:"image_path"`
 	SellerID      string    `json:"seller_id"`
 	WinnerID      string    `json:"winner_id"`
+	IsPaid        bool      `json:"is_paid"`
+	Category      string    `json:"category"` // "mobile", "pc" "accessories"
 	CreatedAt     time.Time `json:"created_at"`
 	UpdatedAt     time.Time `json:"updated_at"`
 }
@@ -25,6 +27,7 @@ type CreateAuctionRequest struct {
 	Description   string  `json:"description" binding:"required"`
 	StartingPrice float64 `json:"starting_price" binding:"required,gte=1"`
 	Type          string  `json:"type" binding:"required,oneof=english dutch sealed"`
+	Category      string  `json:"category" binding:"required,oneof=mobile pc accessories"`
 	StartTime     string  `json:"start_time" binding:"required"`
 	EndTime       string  `json:"end_time" binding:"required"`
 	ImagePath     string  `json:"image_path"`
@@ -43,10 +46,13 @@ type CreateAuctionResponse struct {
 	SellerID      string    `json:"seller_id"`
 	CreatedAt     time.Time `json:"created_at"`
 	ImagePath     string    `json:"image_path"`
+	Category      string    `json:"category"`
+	IsPaid        bool      `json:"is_paid"`
 }
 
 type AuctionFilter struct {
 	Type          string  `json:"type"`
+	Category      string  `json:"category"`
 	Status        string  `json:"status"`
 	StartingPrice float64 `json:"starting_price"`
 }

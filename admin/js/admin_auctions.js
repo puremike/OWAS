@@ -15,6 +15,15 @@ async function loadAuctions() {
     const container = document.getElementById('auction-list');
     container.innerHTML = '';
 
+    let payMsg = auctions.is_paid;
+
+        if (payMsg === true) {
+            payMsg = '✅ Paid';
+        }
+        else {
+            payMsg = '❌ Not Paid';
+        }
+
     auctions.forEach(auction => {
         const div = document.createElement('div');
         div.className = 'border p-4 rounded flex justify-between items-center';
@@ -23,6 +32,7 @@ async function loadAuctions() {
           <div>
             <h2 class="font-semibold">${auction.title}</h2>
             <p>ID: ${auction.id}</p>
+            <p class="font-semibold">Payment Status: ${payMsg}</p>
           </div>
           <button data-id="${auction.id}" class="delete-btn bg-red-500 text-white px-3 py-1 rounded">Delete</button>
         `;

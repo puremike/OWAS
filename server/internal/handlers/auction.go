@@ -77,6 +77,8 @@ func (a *AuctionHandler) CreateAuction(c *gin.Context) {
 		StartTime:     startDate,
 		EndTime:       endDate,
 		ImagePath:     payload.ImagePath,
+		Category:      payload.Category,
+		IsPaid:        false,
 	}
 
 	createdAuction, err := a.service.CreateAuction(c.Request.Context(), auction)
@@ -98,6 +100,7 @@ func (a *AuctionHandler) CreateAuction(c *gin.Context) {
 		EndTime:       createdAuction.EndTime,
 		CreatedAt:     createdAuction.CreatedAt,
 		ImagePath:     createdAuction.ImagePath,
+		Category:      createdAuction.Category,
 	}
 
 	c.JSON(http.StatusCreated, res)
@@ -328,8 +331,9 @@ func (a *AuctionHandler) GetAuctions(c *gin.Context) {
 	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "10"))
 	offset, _ := strconv.Atoi(c.DefaultQuery("offset", "0"))
 	filter := &models.AuctionFilter{
-		Type:   c.Query("type"),
-		Status: c.Query("status"),
+		Type:     c.Query("type"),
+		Category: c.Query("category"),
+		Status:   c.Query("status"),
 		StartingPrice: func() float64 {
 			p, _ := strconv.ParseFloat(c.Query("starting_price"), 64)
 			return p
@@ -363,6 +367,8 @@ func (a *AuctionHandler) GetAuctions(c *gin.Context) {
 			EndTime:       auction.EndTime,
 			CreatedAt:     auction.CreatedAt,
 			ImagePath:     auction.ImagePath,
+			Category:      auction.Category,
+			IsPaid:        auction.IsPaid,
 		})
 	}
 
@@ -411,6 +417,7 @@ func (a *AuctionHandler) GetMyWonAuctions(c *gin.Context) {
 			EndTime:       auction.EndTime,
 			CreatedAt:     auction.CreatedAt,
 			ImagePath:     auction.ImagePath,
+			IsPaid:        auction.IsPaid,
 		})
 	}
 

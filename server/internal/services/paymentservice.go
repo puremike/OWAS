@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"log"
+	"net/http"
 
 	"github.com/puremike/online_auction_api/internal/errs"
 	"github.com/puremike/online_auction_api/internal/models"
@@ -14,14 +15,16 @@ import (
 )
 
 type PaymentService struct {
-	stripe *payments.StripePayment
-	repo   store.PaymentRepository
+	stripe      *payments.StripePayment
+	repo        store.PaymentRepository
+	auctionRepo store.AuctionRepository
 }
 
-func NewPaymentService(stripe *payments.StripePayment, repo store.PaymentRepository) *PaymentService {
+func NewPaymentService(stripe *payments.StripePayment, repo store.PaymentRepository, auctionRepo store.AuctionRepository) *PaymentService {
 	return &PaymentService{
-		stripe: stripe,
-		repo:   repo,
+		stripe:      stripe,
+		repo:        repo,
+		auctionRepo: auctionRepo,
 	}
 }
 
@@ -61,18 +64,20 @@ func (p *PaymentService) CreatePaymentCheckout(ctx context.Context, amount int64
 		PaymentMethodTypes: stripe.StringSlice([]string{
 			string(stripe.PaymentMethodTypeCard),
 		}),
+
+		PaymentIntentData: &stripe.CheckoutSessionPaymentIntentDataParams{
+			Metadata: map[string]string{
+				"order_id":   orderID,
+				"buyer_id":   buyerID,
+				"auction_id": auctionID,
+			},
+		},
 	}
 
 	params.AddMetadata("order_id", orderID)
 	params.AddMetadata("buyer_id", buyerID)
+	params.AddMetadata("auction_id", auctionID)
 
-	// --- ADD THESE LOGS ---
-	log.Printf("DEBUG: CreatePaymentCheckout - About to add metadata. Incoming orderID: '%s', Incoming buyerID: '%s'", orderID, buyerID)
-
-	params.AddMetadata("order_id", orderID)
-	params.AddMetadata("buyer_id", buyerID)
-
-	// --- ADD THIS LOG to inspect params.Metadata *before* API call ---
 	if params.Metadata != nil {
 		log.Printf("DEBUG: CreatePaymentCheckout - Params metadata before API call: %+v", params.Metadata)
 	} else {
@@ -85,7 +90,6 @@ func (p *PaymentService) CreatePaymentCheckout(ctx context.Context, amount int64
 		return nil, errs.ErrFailedToCreateStripeCheckout
 	}
 
-	// --- ADD THIS LOG to inspect session.Metadata *after* API call ---
 	log.Printf("DEBUG: Stripe Session Created - SessionID: %s, Metadata from Stripe response: %+v", session.ID, session.Metadata)
 
 	req := &models.Payment{
@@ -124,7 +128,7 @@ func (p *PaymentService) HandleCheckoutSessionCompleted(ctx context.Context, eve
 	ctx, cancel := context.WithTimeout(ctx, QueryDefaultContext)
 	defer cancel()
 
-	err := json.Unmarshal(event.Data.Raw, &session)
+	err := json.Unmarshal(event.Data.Raw, session)
 	if err != nil {
 		log.Printf("failed to unmarshal event data: %v", err)
 		return errs.ErrFailedToUnmarshalEvent
@@ -132,7 +136,11 @@ func (p *PaymentService) HandleCheckoutSessionCompleted(ctx context.Context, eve
 
 	orderID := session.Metadata["order_id"]
 	buyerID := session.Metadata["buyer_id"]
+	auctionID := session.Metadata["auction_id"]
 	stripeSessionID := session.ID
+
+	log.Printf("DEBUG: PAYMENT CHECKOUT NOW -- MY ORDERID ---> %s", orderID)
+	log.Printf("DEBUG: PAYMENT CHECKOUT NOW -- MY AUCTIONID ---> %s", auctionID)
 
 	if orderID == "" || buyerID == "" {
 		log.Printf("Missing order_id or user_id in session metadata for session %s", stripeSessionID)
@@ -141,16 +149,20 @@ func (p *PaymentService) HandleCheckoutSessionCompleted(ctx context.Context, eve
 
 	log.Printf("handling checkout session completed for session: %s, order: %s and user: %s", stripeSessionID, orderID, buyerID)
 
-	payment, err := p.repo.GetPayment(ctx, orderID)
+	payment, err := p.repo.GetPayment(ctx, orderID, buyerID)
 	if err != nil {
 		log.Printf("failed to get payment for order %s and user %s:", orderID, buyerID)
 		return errs.ErrFailedToGetPayment
 	}
 
-	if payment.Status == PaymentStatusCompleted || payment.Status == PaymentStatusFailed {
+	if payment.Status == PaymentStatusCompleted {
 		log.Printf("payment %s (Order: %s) already in terminal status '%s', skipping checkout.session.completed update.", payment.ID, orderID, payment.Status)
 		return nil
 	}
+
+	// if payment.Status == PaymentStatusCompleted || payment.Status == PaymentStatusFailed {
+	// 	log.Printf("payment %s (Order: %s) already in terminal status '%s', skipping checkout.session.completed update.", payment.ID, orderID, payment.Status)
+	// }
 
 	newStatus := ""
 
@@ -172,6 +184,16 @@ func (p *PaymentService) HandleCheckoutSessionCompleted(ctx context.Context, eve
 		}
 	}
 
+	if newStatus == PaymentStatusCompleted {
+		if err := p.auctionRepo.UpdateAuctionPaymentStatus(ctx, true, auctionID); err != nil {
+			log.Printf("failed to update auction payment status: %v", err)
+			return errs.NewHTTPError("failed to update auction payment status", http.StatusInternalServerError)
+
+		}
+	}
+
+	log.Printf("DEBUG: newStatus: %s, payment.Status: %s", newStatus, payment.Status)
+
 	return nil
 }
 
@@ -180,7 +202,7 @@ func (p *PaymentService) HandlePaymentIntentSucceeded(ctx context.Context, event
 	ctx, cancel := context.WithTimeout(ctx, QueryDefaultContext)
 	defer cancel()
 
-	err := json.Unmarshal(event.Data.Raw, &pi)
+	err := json.Unmarshal(event.Data.Raw, pi)
 	if err != nil {
 		log.Printf("failed to unmarshal event data: %v", err)
 		return errs.ErrFailedToUnmarshalEvent
@@ -188,8 +210,12 @@ func (p *PaymentService) HandlePaymentIntentSucceeded(ctx context.Context, event
 
 	// buyerID := pi.Metadata["buyer_id"]
 	orderID := pi.Metadata["order_id"]
+	buyerID := pi.Metadata["buyer_id"]
+	auctionID := pi.Metadata["auction_id"]
 
-	payment, err := p.repo.GetPayment(ctx, orderID)
+	log.Printf("DEBUG: PAYMENT INTENT NOW -- MY ORDERID ---> %s", orderID)
+
+	payment, err := p.repo.GetPayment(ctx, orderID, buyerID)
 	if err != nil {
 		log.Printf("failed to get payment: %v", err)
 		return errs.ErrFailedToGetPayment
@@ -200,16 +226,24 @@ func (p *PaymentService) HandlePaymentIntentSucceeded(ctx context.Context, event
 		return nil
 	}
 
-	if payment.Status == PaymentStatusFailed {
-		log.Printf("Payment %s (Order: %s) was previously '%s', but received payment_intent.succeeded. Transitioning to 'completed'. PI: %s",
-			payment.ID, orderID, PaymentStatusFailed, pi.ID)
-	}
+	// if payment.Status == PaymentStatusFailed {
+	// 	log.Printf("Payment %s (Order: %s) was previously '%s', but received payment_intent.succeeded. Transitioning to 'completed'. PI: %s",
+	// 		payment.ID, orderID, PaymentStatusFailed, pi.ID)
+	// }
 
 	newStatus := PaymentStatusCompleted
 	if err := p.repo.UpdatePayment(ctx, newStatus, payment.ID); err != nil {
 		log.Printf("failed to update payment: %v", err)
 		return errs.ErrFailedToUpdatePayment
 	}
+
+	if err := p.auctionRepo.UpdateAuctionPaymentStatus(ctx, true, auctionID); err != nil {
+		log.Printf("failed to update auction payment status: %v", err)
+		return errs.NewHTTPError("failed to update auction payment status", http.StatusInternalServerError)
+
+	}
+
+	log.Printf("Webhook event type: %s", event.Type)
 
 	return nil
 }
@@ -219,7 +253,7 @@ func (p *PaymentService) HandlePaymentIntentFailed(ctx context.Context, event *s
 	ctx, cancel := context.WithTimeout(ctx, QueryDefaultContext)
 	defer cancel()
 
-	err := json.Unmarshal(event.Data.Raw, &pi)
+	err := json.Unmarshal(event.Data.Raw, pi)
 	if err != nil {
 		log.Printf("failed to unmarshal event data: %v", err)
 		return errs.ErrFailedToUnmarshalEvent
@@ -227,8 +261,9 @@ func (p *PaymentService) HandlePaymentIntentFailed(ctx context.Context, event *s
 
 	//buyerID := pi.Metadata["buyer_id"]
 	orderID := pi.Metadata["order_id"]
+	buyerID := pi.Metadata["buyer_id"]
 
-	payment, err := p.repo.GetPayment(ctx, orderID)
+	payment, err := p.repo.GetPayment(ctx, orderID, buyerID)
 	if err != nil {
 		log.Printf("failed to get payment: %v", err)
 		return errs.ErrFailedToGetPayment
@@ -246,4 +281,12 @@ func (p *PaymentService) HandlePaymentIntentFailed(ctx context.Context, event *s
 	}
 
 	return nil
+}
+
+func (p *PaymentService) GetPayment(ctx context.Context, orderID, buyerID string) (*models.Payment, error) {
+	return p.repo.GetPayment(ctx, orderID, buyerID)
+}
+
+func (p *PaymentService) UpdateAuctionPayment(ctx context.Context, isPaid bool, id string) error {
+	return p.auctionRepo.UpdateAuctionPaymentStatus(ctx, isPaid, id)
 }

@@ -50,7 +50,7 @@ func Routes(app *config.Application) http.Handler {
 
 	wsHandler := ws.NewWSHandler(app.WsHub)
 
-	paymentService := services.NewPaymentService(app.Stripe, app.Store.Payments)
+	paymentService := services.NewPaymentService(app.Stripe, app.Store.Payments, app.Store.Auctions)
 	webHookHandler := handlers.NewWebHookHander(paymentService, app.Store.Auctions)
 
 	imageService := imagesuploader.NewImageService(app.AppConfig.S3Bucket)
@@ -68,6 +68,7 @@ func Routes(app *config.Application) http.Handler {
 		})
 		api.POST("/webhook/stripe", webHookHandler.StripeWebHookHandler)
 		api.GET("/stripe/session/:sessionID", webHookHandler.GetPaymentSession)
+		api.GET("/paymentauction/:auctionID", webHookHandler.UpdateAuctionPayment)
 	}
 
 	user := api.Group("/")
@@ -111,6 +112,8 @@ func Routes(app *config.Application) http.Handler {
 		authGroup.POST("/auctions/:auctionID/stripe/create-checkout-session", middleware.AuctionMiddleware(), webHookHandler.CreateCheckoutSessionHandler)
 
 		authGroup.POST("/auctions/image_upload", imageHandler.UploadImage)
+
+		authGroup.GET("/payments/:orderID", webHookHandler.GetPayment)
 	}
 
 	return g

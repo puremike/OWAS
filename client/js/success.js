@@ -16,4 +16,9 @@ document.addEventListener('DOMContentLoaded', async () => {
             document.getElementById('payment-info').textContent = 'Could not load payment details.';
         }
     }
+
+    setTimeout(() => {
+        window.location.href ='my_auctions.html';
+    }, 3000);
 });
+

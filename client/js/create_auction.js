@@ -44,7 +44,8 @@ document.addEventListener('DOMContentLoaded', () => {
           type: document.getElementById('auction_type').value,
           start_time: document.getElementById('start_time').value,
           end_time: document.getElementById('end_time').value,
-          image_path: document.getElementById('image_path').value
+          image_path: document.getElementById('image_path').value,
+          category: document.getElementById('auction_category').value,
         };
       
         try {

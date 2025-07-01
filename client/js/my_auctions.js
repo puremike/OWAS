@@ -20,36 +20,63 @@ async function loadWonAuctions() {
             return;
         }
 
+        console.log(auctions.is_paid);
+
         auctions.forEach(auction => {
+            console.log(auctions.is_paid);
             const div = document.createElement('div');
             div.className = 'border p-4 rounded bg-white shadow';
 
+            let paymentStatus = auction.is_paid ? '✅ Paid' : '❌ Not Paid';
+            let paymentButton = '';
+
+            if (!auction.is_paid) {
+                paymentButton = `
+                    <button class="pay-btn bg-green-500 text-white px-3 py-1 rounded mt-2" data-id="${auction.id}">
+                        Make Payment
+                    </button>
+                `;
+            }
+
+            div.setAttribute('data-auction-id', auction.id);  // Add data attribute for easy DOM targeting
+
             div.innerHTML = `
                 <h2 class="font-bold text-lg">${auction.title}</h2>
-                <p><strong>Auction ID:</strong> ${auction.id}</p>
+                <p><strong>Auction ID:</strong> ${auction.id}</p>O
                 <p><strong>Status:</strong> ${auction.status}</p>
                 <p><strong>Final Price:</strong> $${auction.current_price}</p>
-                <button class="pay-btn bg-green-500 text-white px-3 py-1 rounded mt-2" data-id="${auction.id}">Make Payment</button>
+                <p><strong>Payment Status:</strong> ${paymentStatus}</p>
+                ${paymentButton}
             `;
 
             container.appendChild(div);
         });
 
+        // Attach event listeners to all "Make Payment" buttons
         document.querySelectorAll('.pay-btn').forEach(btn => {
             btn.addEventListener('click', async (e) => {
                 const auctionId = e.target.getAttribute('data-id');
-                const response = await fetch(`${API_BASE_URL}/auctions/${auctionId}/stripe/create-checkout-session`, {
-                    method: 'POST',
-                    credentials: 'include'
-                });
-        
-                const data = await response.json();
-                window.location.href = data.checkout_url;  // Stripe Checkout URL
+                try {
+                    const response = await fetch(`${API_BASE_URL}/auctions/${auctionId}/stripe/create-checkout-session`, {
+                        method: 'POST',
+                        credentials: 'include'
+                    });
+
+                    const data = await response.json();
+                    if (data.checkout_url) {
+                        window.location.href = data.checkout_url;  // Redirect to Stripe Checkout
+                    } else {
+                        alert('Failed to create checkout session.');
+                    }
+                } catch (err) {
+                    console.error(err);
+                    alert('Error creating checkout session.');
+                }
             });
         });
 
     } catch (error) {
         console.error(error);
-        document.getElementById('auction-list').innerHTML = '<p class="text-red-500">Failed to load auctions.</p>';
+        window.location.href = 'auth.html';
     }
 }

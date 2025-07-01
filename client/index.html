@@ -5,8 +5,15 @@
   <title>Online Auctions - Home</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="js/api.js" defer></script>
-  <script src="js/index.js" defer></script>
   <script src="js/nav.js" defer type="module"></script>
+  <script src="js/index.js" defer></script>
+  <script src="js/main.js" defer></script>
+  <style>
+    /* Custom class for persistent click effect, Tailwind doesn't have a direct 'clicked' pseudo-class */
+    .scale-95-persistent {
+      transform: scale(1.25);
+    }
+  </style>
 </head>
 <body class="bg-gray-100 min-h-screen flex flex-col">
 
@@ -21,7 +28,7 @@
   <!-- Hero Section -->
   <section class="bg-yellow-100 py-12 px-6 text-center">
     <h2 class="text-3xl font-bold text-gray-800 mb-4">Welcome to the Ultimate Online Auction Experience!</h2>
-    <p class="text-lg text-gray-700 mb-6">Bid on exclusive items, rare collectibles, and more.</p>
+    <p class="text-2xl text-gray-700 mb-3">Bid on exclusive items, rare collectibles, and more.</p>
     <div id="nav-buttons" class="space-x-4">
         <!-- Buttons will be injected here -->
       </div>
@@ -31,22 +38,22 @@
   <main class="flex-grow p-6 max-w-6xl mx-auto">
     <h3 class="text-2xl font-semibold mb-6">Popular Categories</h3>
     <div class="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-      <div class="bg-white rounded shadow p-4">
-        <img src="https://via.placeholder.com/300x200?text=Antique+Vase" alt="Antique Vase" class="w-full h-48 object-cover rounded mb-4">
-        <h4 class="text-xl font-bold mb-2">Antiques</h4>
-        <p class="text-gray-700">Discover rare antiques and timeless collectibles.</p>
+      <div class="bg-white rounded shadow p-4 transform transition-transform duration-300 hover:scale-105 active:scale-105">
+        <a href="auctions.html"><img src="./owas_images/iphone__ky2k6x5u6vue_og.png" alt="Mobile- Iphone" class="w-full h-48 object-cover rounded mb-4"></a>
+        <h4 class="text-xl font-bold mb-2">Mobile Phones and Tablet</h4>
+        <p class="text-gray-700">Bid on the latest smartphones and tablets.</p>
       </div>
 
-      <div class="bg-white rounded shadow p-4">
-        <img src="https://via.placeholder.com/300x200?text=Sports+Memorabilia" alt="Sports Memorabilia" class="w-full h-48 object-cover rounded mb-4">
-        <h4 class="text-xl font-bold mb-2">Sports Memorabilia</h4>
-        <p class="text-gray-700">Bid on signed jerseys, equipment, and historic collectibles.</p>
+      <div class="bg-white rounded shadow p-4 transform transition-transform duration-300 hover:scale-105 active:scale-105">
+        <a href="auctions.html"><img src="./owas_images/intro__ewz1ro7xs14y_large.jpg" alt="Computing Devices" class="w-full h-60 object-cover rounded mb-4"></a>
+        <h4 class="text-xl font-bold mb-2">Computing Devices</h4>
+        <p class="text-gray-700">Bid on the latest laptops and desktops.</p>
       </div>
 
-      <div class="bg-white rounded shadow p-4">
-        <img src="https://via.placeholder.com/300x200?text=Luxury+Watches" alt="Luxury Watches" class="w-full h-48 object-cover rounded mb-4">
-        <h4 class="text-xl font-bold mb-2">Luxury Watches</h4>
-        <p class="text-gray-700">Find elegant timepieces from top brands.</p>
+      <div class="bg-white rounded shadow p-4 transform transition-transform duration-300 hover:scale-105 active:scale-105">
+        <a href="auctions.html"><img src="./owas_images/gadgets-accessories-isolated-white-background-gadgets-accessories-132710503.webp" alt="Mobile Accessories" class="w-full h-48 object-cover rounded mb-4"></a>
+        <h4 class="text-xl font-bold mb-2">Mobile & PC Accessories</h4>
+        <p class="text-gray-700">Bid on the Mobile and PC accessories.</p>
       </div>
     </div>
 

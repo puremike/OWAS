@@ -659,7 +659,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/auctions/{auctionID}/create-checkout-session": {
+        "/auctions/{auctionID}/stripe/create-checkout-session": {
             "post": {
                 "security": [
                     {
@@ -681,7 +681,7 @@ const docTemplate = `{
                     {
                         "type": "string",
                         "description": "ID of the auction to create a checkout session for",
-                        "name": "auction_id",
+                        "name": "auctionID",
                         "in": "path",
                         "required": true
                     }
@@ -867,6 +867,67 @@ const docTemplate = `{
                 "responses": {
                     "200": {
                         "description": "Logout successful",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    }
+                }
+            }
+        },
+        "/payments/{orderId}": {
+            "get": {
+                "security": [
+                    {
+                        "jwtCookieAuth": []
+                    }
+                ],
+                "description": "Get a Payment by Order ID",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Payments"
+                ],
+                "summary": "Get a Payment by Order ID",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Order ID",
+                        "name": "orderId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Payment retrieved successfully",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_puremike_online_auction_api_internal_models.Payment"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request - invalid input",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized - user not authenticated",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found - payment not found",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error - failed to retrieve payment",
                         "schema": {
                             "$ref": "#/definitions/gin.H"
                         }
@@ -1191,6 +1252,10 @@ const docTemplate = `{
         "github_com_puremike_online_auction_api_internal_models.Auction": {
             "type": "object",
             "properties": {
+                "category": {
+                    "description": "\"mobile\", \"pc\" \"accessories\"",
+                    "type": "string"
+                },
                 "created_at": {
                     "type": "string"
                 },
@@ -1276,6 +1341,7 @@ const docTemplate = `{
         "github_com_puremike_online_auction_api_internal_models.CreateAuctionRequest": {
             "type": "object",
             "required": [
+                "category",
                 "description",
                 "end_time",
                 "start_time",
@@ -1284,6 +1350,14 @@ const docTemplate = `{
                 "type"
             ],
             "properties": {
+                "category": {
+                    "type": "string",
+                    "enum": [
+                        "mobile",
+                        "pc",
+                        "accessories"
+                    ]
+                },
                 "description": {
                     "type": "string"
                 },
@@ -1316,6 +1390,9 @@ const docTemplate = `{
         "github_com_puremike_online_auction_api_internal_models.CreateAuctionResponse": {
             "type": "object",
             "properties": {
+                "category": {
+                    "type": "string"
+                },
                 "created_at": {
                     "type": "string"
                 },
@@ -1429,6 +1506,39 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "old_password": {
+                    "type": "string"
+                }
+            }
+        },
+        "github_com_puremike_online_auction_api_internal_models.Payment": {
+            "type": "object",
+            "properties": {
+                "amount": {
+                    "type": "number"
+                },
+                "auction_id": {
+                    "type": "string"
+                },
+                "buyer_id": {
+                    "type": "string"
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "order_id": {
+                    "type": "string"
+                },
+                "session_id": {
+                    "type": "string"
+                },
+                "status": {
+                    "description": "pending, completed, failed",
+                    "type": "string"
+                },
+                "updated_at": {
                     "type": "string"
                 }
             }
