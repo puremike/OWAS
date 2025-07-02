@@ -206,9 +206,35 @@ func (u *UserHandler) setJwtCookie(c *gin.Context, user *models.LoginResponse) {
 //
 //	@Security		jwtCookieAuth
 func (u *UserHandler) Logout(c *gin.Context) {
-	c.SetCookie("jwt", "", -1, "/", "", false, true)
-	c.SetCookie("refresh_token", "", -1, "/", "", false, true)
-	c.SetSameSite(http.SameSiteStrictMode)
+	isSecure := true
+	sameSite := http.SameSiteNoneMode
+
+	if u.app.AppConfig.Env == "development" {
+		isSecure = false
+		sameSite = http.SameSiteLaxMode
+	}
+
+	// Clear JWT
+	http.SetCookie(c.Writer, &http.Cookie{
+		Name:     "jwt",
+		Value:    "",
+		Path:     "/",
+		MaxAge:   -1,
+		HttpOnly: true,
+		Secure:   isSecure,
+		SameSite: sameSite,
+	})
+
+	// Clear refresh_token
+	http.SetCookie(c.Writer, &http.Cookie{
+		Name:     "refresh_token",
+		Value:    "",
+		Path:     "/",
+		MaxAge:   -1,
+		HttpOnly: true,
+		Secure:   isSecure,
+		SameSite: sameSite,
+	})
 
 	c.JSON(http.StatusOK, gin.H{"message": "logout successful"})
 }

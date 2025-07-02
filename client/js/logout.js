@@ -19,7 +19,7 @@
       logoutBtn.addEventListener('click', async function () {
         try {
           await apiRequest('/logout', 'POST', {}, true);
-          window.location.href = 'auth.html';
+          window.location.href = 'index.html';
         } catch (error) {
           console.error('Logout failed:', error);
           alert('Logout failed. Please try again.');
