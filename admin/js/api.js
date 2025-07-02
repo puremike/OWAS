@@ -1,4 +1,4 @@
-const API_BASE_URL = "https://owas-server.onrender.com";
+const API_BASE_URL = "https://owas-server.onrender.com/api/v1";
 
 async function apiPost(endpoint, data) {
   const response = await fetch(`${API_BASE_URL}${endpoint}`, {
