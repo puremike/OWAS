@@ -5,7 +5,7 @@ import (
 	"github.com/puremike/online_auction_api/internal/ratelimiters"
 )
 
-func myRateLimiters(cfg *config.AppConfig) (gLm, sLm, hLm ratelimiters.Limiter) {
+func MyRateLimiters(cfg *config.AppConfig) (gLm, sLm, hLm ratelimiters.Limiter) {
 
 	var generalRL ratelimiters.Limiter
 	if cfg.GeneralRL.Enabled {

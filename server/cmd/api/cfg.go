@@ -7,7 +7,7 @@ import (
 	"github.com/puremike/online_auction_api/pkg"
 )
 
-func myCfg() *config.AppConfig {
+func MyCfg() *config.AppConfig {
 	return &config.AppConfig{
 		Port:     pkg.GetEnvString("PORT", "8080"),
 		Env:      pkg.GetEnvString("ENV", "development"),
