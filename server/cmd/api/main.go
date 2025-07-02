@@ -46,7 +46,7 @@ func main() {
 	docs.SwaggerInfo.BasePath = "/api/v1"
 
 	// configuration
-	cfg := MyCfg()
+	cfg := config.MyCfg()
 
 	logger := zap.NewExample().Sugar()
 	defer logger.Sync()
@@ -59,7 +59,7 @@ func main() {
 
 	logger.Infow("Connected to database successfully")
 
-	gLm, sLm, hLm := MyRateLimiters(cfg)
+	gLm, sLm, hLm := config.MyRateLimiters(cfg)
 
 	app := &config.Application{
 		AppConfig: cfg,
