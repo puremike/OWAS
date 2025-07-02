@@ -173,7 +173,7 @@ func (u *UserHandler) setJwtCookie(c *gin.Context, user *models.LoginResponse) {
 		Path:     "/",
 		MaxAge:   int(u.app.AppConfig.AuthConfig.TokenExp.Seconds()),
 		HttpOnly: true,
-		Secure:   false, // change to true in production
+		Secure:   true, // change to true in production
 		SameSite: http.SameSiteLaxMode,
 	})
 
@@ -183,7 +183,7 @@ func (u *UserHandler) setJwtCookie(c *gin.Context, user *models.LoginResponse) {
 		Path:     "/",
 		MaxAge:   int(u.app.AppConfig.AuthConfig.RefreshTokenExp.Seconds()),
 		HttpOnly: true,
-		Secure:   false, // change to true in production
+		Secure:   true, // change to true in production
 		SameSite: http.SameSiteLaxMode,
 	})
 }
