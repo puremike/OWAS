@@ -167,14 +167,22 @@ func (u *UserHandler) AdminLogin(c *gin.Context) {
 
 func (u *UserHandler) setJwtCookie(c *gin.Context, user *models.LoginResponse) {
 
+	isTrue := true
+	sameSite := http.SameSiteNoneMode
+
+	if u.app.AppConfig.Env == "development" {
+		isTrue = false
+		sameSite = http.SameSiteLaxMode
+	}
+
 	http.SetCookie(c.Writer, &http.Cookie{
 		Name:     "jwt",
 		Value:    user.Token,
 		Path:     "/",
 		MaxAge:   int(u.app.AppConfig.AuthConfig.TokenExp.Seconds()),
 		HttpOnly: true,
-		Secure:   true, // change to true in production
-		SameSite: http.SameSiteLaxMode,
+		Secure:   isTrue, // change to true in production
+		SameSite: sameSite,
 	})
 
 	http.SetCookie(c.Writer, &http.Cookie{
@@ -183,8 +191,8 @@ func (u *UserHandler) setJwtCookie(c *gin.Context, user *models.LoginResponse) {
 		Path:     "/",
 		MaxAge:   int(u.app.AppConfig.AuthConfig.RefreshTokenExp.Seconds()),
 		HttpOnly: true,
-		Secure:   true, // change to true in production
-		SameSite: http.SameSiteLaxMode,
+		Secure:   isTrue, // change to true in production
+		SameSite: sameSite,
 	})
 }
 
