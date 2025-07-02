@@ -16,12 +16,12 @@ type User struct {
 }
 
 type CreateUserRequest struct {
-	Username        string `json:"username" binding:"required,min=4,max=32"`
+	Username        string `json:"username" binding:"required,min=2,max=64"`
 	Email           string `json:"email" binding:"required,email"`
 	Password        string `json:"password" binding:"required,passwd"`
 	ConfirmPassword string `json:"confirm_password" binding:"required"`
-	FullName        string `json:"full_name" binding:"required,min=6,max=32"`
-	Location        string `json:"location" binding:"required,min=6,max=42"`
+	FullName        string `json:"full_name" binding:"required,min=2,max=64"`
+	Location        string `json:"location" binding:"required,min=2,max=64"`
 }
 
 type UserResponse struct {
@@ -34,10 +34,10 @@ type UserResponse struct {
 }
 
 type UserProfileUpdateRequest struct {
-	Username string `json:"username" binding:"required,min=4,max=32"`
+	Username string `json:"username" binding:"required,min=2,max=64"`
 	Email    string `json:"email" binding:"required,email"`
-	FullName string `json:"full_name" binding:"required,min=6,max=32"`
-	Location string `json:"location" binding:"required,min=6,max=42"`
+	FullName string `json:"full_name" binding:"required,min=2,max=64"`
+	Location string `json:"location" binding:"required,min=2,max=64"`
 }
 
 type LoginRequest struct {
