@@ -131,7 +131,7 @@ func (a *AuctionService) PlaceBid(ctx context.Context, req *models.PlaceBidReque
 		a.notifications <- &models.NotificationEvent{
 			Type:      models.NotificationOutBid,
 			UserID:    previousHighestBidderID,
-			Message:   fmt.Sprintf("You have been outbid on auction: %s", auction.Title),
+			Message:   fmt.Sprintf("You have been outbid on auction: %s; current bid: %f", auction.Title, req.BidAmount),
 			AuctionID: req.AuctionID,
 			TimeStamp: time.Now(),
 		}

@@ -1,6 +1,25 @@
 let imagePath;
+
+// async function checkAuthAndLoadAuctionsSec() {
+//     try {
+//         await apiRequest('/me', 'GET', null, true);
+//         loadAuctions();
+//     } catch (error) {
+//         console.error('Auth check failed:', error);
+//         window.location.href = 'auth.html';
+//     }
+// }
+
 document.addEventListener('DOMContentLoaded', async () => {
     renderNav(document.getElementById('nav-buttons'));
+
+    try {
+        await apiRequest('/me', 'GET', null, true);  // Check auth first
+    } catch (error) {
+        console.error('JWT expired or user not authenticated.');
+        window.location.href = 'auth.html';
+        return; // Prevent rest of the page from loading
+    }
 
     const urlParams = new URLSearchParams(window.location.search);
     const auctionId = urlParams.get('id');
@@ -83,7 +102,7 @@ document.getElementById('confirm-delete').addEventListener('click', async () => 
     setTimeout(() => {
         msg.classList.add('hidden');
         window.location.href = 'auctions.html';  // Redirect back to auction list
-    }, 3000);
+    }, 300);
 });
 
 // Cancel delete
@@ -216,15 +235,11 @@ async function submitAuctionUpdate(auctionId) {
 async function deleteAuction(auctionId) {
     try {
         await apiRequest(`/auctions/${auctionId}`, 'DELETE', null, true);
-        alert('✅ Auction deleted successfully!');
         window.location.href = 'auctions.html';  // Redirect to homepage or auction list
     } catch (error) {
         console.error('Failed to delete auction:', error);
-        alert(`❌ Failed to delete auction: ${error.message}`);
     }
 }
-
-
 
 
 

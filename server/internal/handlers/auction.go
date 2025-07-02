@@ -125,7 +125,7 @@ func (a *AuctionHandler) CreateAuction(c *gin.Context) {
 //	@Security		jwtCookieAuth
 func (a *AuctionHandler) UpdateAuction(c *gin.Context) {
 
-	var payload models.CreateAuctionRequest
+	var payload models.UpdateAuctionRequest
 	if err := c.ShouldBindJSON(&payload); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
@@ -398,6 +398,92 @@ func (a *AuctionHandler) GetMyWonAuctions(c *gin.Context) {
 	auctions, err := a.service.GetWonAuctionsByWinnerID(c.Request.Context(), authUser.ID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to load won auctions"})
+		return
+	}
+
+	res := &[]models.CreateAuctionResponse{}
+
+	for _, auction := range *auctions {
+		*res = append(*res, models.CreateAuctionResponse{
+			ID:            auction.ID,
+			SellerID:      auction.SellerID,
+			Title:         auction.Title,
+			Description:   auction.Description,
+			StartingPrice: auction.StartingPrice,
+			CurrentPrice:  auction.CurrentPrice,
+			Type:          auction.Type,
+			Status:        auction.Status,
+			StartTime:     auction.StartTime,
+			EndTime:       auction.EndTime,
+			CreatedAt:     auction.CreatedAt,
+			ImagePath:     auction.ImagePath,
+			IsPaid:        auction.IsPaid,
+		})
+	}
+
+	c.JSON(http.StatusOK, res)
+}
+
+// GetBiddedAuctions godoc
+//
+//	@Summary		Get My Bidded Auctions
+//	@Description	Retrieves a list of auctions the user has bidded on.
+//	@Tags			Auctions
+//	@Accept			json
+//	@Produce		json
+//	@Success		200			{array}		models.CreateAuctionResponse	"List of auctions"
+//	@Failure		401			{object}	gin.H							"Unauthorized - user not authenticated"
+//	@Failure		500			{object}	gin.H							"Internal Server Error - failed to retrieve auctions"
+//	@Router			/auctions/bidded [get]
+//
+//	@Security		jwtCookieAuth
+func (a *AuctionHandler) GetBiddedAuctions(c *gin.Context) {
+	authUser, err := contexts.GetUserFromContext(c)
+	if authUser == nil || err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+		return
+	}
+
+	auctions, err := a.service.GetBiddedAuctionsForUser(c.Request.Context(), authUser.ID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to load bidded auctions"})
+		return
+	}
+
+	res := &[]models.CreateAuctionResponse{}
+
+	for _, auction := range *auctions {
+		*res = append(*res, models.CreateAuctionResponse{
+			ID:            auction.ID,
+			SellerID:      auction.SellerID,
+			Title:         auction.Title,
+			Description:   auction.Description,
+			StartingPrice: auction.StartingPrice,
+			CurrentPrice:  auction.CurrentPrice,
+			Type:          auction.Type,
+			Status:        auction.Status,
+			StartTime:     auction.StartTime,
+			EndTime:       auction.EndTime,
+			CreatedAt:     auction.CreatedAt,
+			ImagePath:     auction.ImagePath,
+			IsPaid:        auction.IsPaid,
+		})
+	}
+
+	c.JSON(http.StatusOK, res)
+}
+
+func (a *AuctionHandler) GetAuctionsBySellerID(c *gin.Context) {
+
+	authUser, err := contexts.GetUserFromContext(c)
+	if authUser == nil || err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+		return
+	}
+
+	auctions, err := a.service.GetAuctionsBySellerID(c.Request.Context(), authUser.ID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to load auctions"})
 		return
 	}
 

@@ -3,6 +3,7 @@ package store
 import (
 	"context"
 	"database/sql"
+	"log"
 	"strconv"
 
 	"github.com/puremike/online_auction_api/internal/errs"
@@ -23,6 +24,57 @@ func (a *AuctionStore) GetAuctionById(ctx context.Context, id string) (*models.A
 	query := `SELECT id, seller_id, winner_id, title, description, starting_price, current_price, type, status, start_time, end_time, image_path, created_at FROM auctions WHERE id = $1`
 
 	if err := a.db.QueryRowContext(ctx, query, id).Scan(&auction.ID, &auction.SellerID, &auction.WinnerID, &auction.Title, &auction.Description, &auction.StartingPrice, &auction.CurrentPrice, &auction.Type, &auction.Status, &auction.StartTime, &auction.EndTime, &auction.ImagePath, &auction.CreatedAt); err != nil {
+		if err == sql.ErrNoRows {
+			return nil, errs.ErrAuctionNotFound
+		}
+		return nil, err
+	}
+
+	return auction, nil
+}
+
+func (a *AuctionStore) GetAuctionBySellerId(ctx context.Context, sellerID string) (*[]models.Auction, error) {
+
+	ctx, cancel := context.WithTimeout(ctx, QueryBackgroundTimeout)
+	defer cancel()
+
+	auctions := []models.Auction{}
+
+	query := `SELECT id, seller_id, winner_id, title, description, starting_price, current_price, type, status, start_time, end_time, image_path, created_at FROM auctions WHERE seller_id = $1`
+
+	rows, err := a.db.QueryContext(ctx, query, sellerID)
+	if err != nil {
+		return nil, err
+	}
+
+	defer rows.Close()
+
+	for rows.Next() {
+		var a models.Auction
+		err := rows.Scan(&a.ID, &a.SellerID, &a.WinnerID, &a.Title, &a.Description, &a.StartingPrice, &a.CurrentPrice, &a.Type, &a.Status, &a.StartTime, &a.EndTime, &a.ImagePath, &a.CreatedAt)
+		if err != nil {
+			return nil, err
+		}
+		auctions = append(auctions, a)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return &auctions, nil
+}
+
+func (a *AuctionStore) GetAuctionByWinnerId(ctx context.Context, winnerID string) (*models.Auction, error) {
+
+	ctx, cancel := context.WithTimeout(ctx, QueryBackgroundTimeout)
+	defer cancel()
+
+	auction := &models.Auction{}
+
+	query := `SELECT id, seller_id, winner_id, title, description, starting_price, current_price, type, status, start_time, end_time, image_path, created_at FROM auctions WHERE winner_id = $1`
+
+	if err := a.db.QueryRowContext(ctx, query, winnerID).Scan(&auction.ID, &auction.SellerID, &auction.WinnerID, &auction.Title, &auction.Description, &auction.StartingPrice, &auction.CurrentPrice, &auction.Type, &auction.Status, &auction.StartTime, &auction.EndTime, &auction.ImagePath, &auction.CreatedAt); err != nil {
 		if err == sql.ErrNoRows {
 			return nil, errs.ErrAuctionNotFound
 		}
@@ -193,10 +245,11 @@ func (a *AuctionStore) GetWonAuctionsByWinnerID(ctx context.Context, winnerID st
 	ctx, cancel := context.WithTimeout(ctx, QueryBackgroundTimeout)
 	defer cancel()
 
-	query := `SELECT id, seller_id, winner_id, title, description, starting_price, current_price, type, status, start_time, end_time, image_path, is_paid, created_at FROM auctions WHERE winner_id = $1`
+	query := `SELECT id, seller_id, winner_id, title, description, starting_price, current_price, type, status, start_time, end_time, image_path, is_paid, created_at FROM auctions WHERE winner_id = $1 AND status = 'closed';`
 
 	rows, err := a.db.QueryContext(ctx, query, winnerID)
 	if err != nil {
+		log.Printf("Failed to get won auctions: %v", err)
 		return nil, err
 	}
 
@@ -244,4 +297,59 @@ func (a *AuctionStore) UpdateAuctionPaymentStatus(ctx context.Context, isPaid bo
 	}
 
 	return nil
+}
+
+func (a *AuctionStore) GetBiddedAuctions(ctx context.Context, bidderID string) (*[]models.Auction, error) {
+
+	ctx, cancel := context.WithTimeout(ctx, QueryBackgroundTimeout)
+	defer cancel()
+
+	query := `SELECT DISTINCT 
+  a.id,
+  a.seller_id,
+  a.winner_id,
+  a.title,
+  a.description,
+  a.starting_price,
+  a.current_price,
+  a.type,
+  a.status,
+  a.start_time,
+  a.end_time,
+  a.image_path,
+  a.category,
+  a.is_paid,
+  a.created_at
+FROM auctions a
+JOIN bid b ON a.id = b.auction_id
+WHERE b.bidder_id = $1;`
+
+	rows, err := a.db.QueryContext(ctx, query, bidderID)
+	if err != nil {
+		log.Printf("SQL query error: %v", err)
+		return nil, err
+	}
+
+	defer rows.Close()
+
+	var auctions []models.Auction
+
+	for rows.Next() {
+		var a models.Auction
+		err := rows.Scan(&a.ID, &a.SellerID, &a.WinnerID, &a.Title, &a.Description, &a.StartingPrice, &a.CurrentPrice, &a.Type, &a.Status, &a.StartTime, &a.EndTime, &a.ImagePath, &a.Category, &a.IsPaid, &a.CreatedAt)
+		if err != nil {
+			log.Printf("SQL query error: %v", err)
+			return nil, err
+		}
+
+		auctions = append(auctions, a)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, err
+
+	}
+
+	return &auctions, nil
+
 }

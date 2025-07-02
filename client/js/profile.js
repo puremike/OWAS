@@ -59,11 +59,12 @@ async function changePassword() {
     }
 
     try {
-        await apiRequest('/change-password', 'POST', {
+        await apiRequest('/change-password', 'PUT', {
             old_password: old_password, new_password: new_password, confirm_password: confirm_password
         }, true);
         showMessage('Password updated successfully.', 'success');
         document.getElementById('password-form').reset();
+        window.location.href = 'auth.html';
     } catch (error) {
         showMessage('Failed to update password.', 'error');
     }

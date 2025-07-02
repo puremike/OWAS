@@ -406,7 +406,7 @@ func (u *UserHandler) UpdateProfile(c *gin.Context) {
 //	@Failure		400			{object}	gin.H							"Bad Request - invalid input"
 //	@Failure		401			{object}	gin.H							"Unauthorized - user not authenticated"
 //	@Failure		500			{object}	gin.H							"Internal Server Error - failed to change password"
-//	@Router			/{username}/change-password [put]
+//	@Router			/change-password [put]
 //
 //	@Security		jwtCookieAuth
 func (u *UserHandler) ChangePassword(c *gin.Context) {
@@ -419,30 +419,30 @@ func (u *UserHandler) ChangePassword(c *gin.Context) {
 
 	authUser, err := contexts.GetUserFromContext(c)
 	if authUser == nil || err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized to update profile"})
 		return
 	}
 
-	username := c.Param("username")
-	if username == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "username is required"})
-		return
-	}
+	// username := c.Param("username")
+	// if username == "" {
+	// 	c.JSON(http.StatusBadRequest, gin.H{"error": "username is required"})
+	// 	return
+	// }
 
-	currentUser, err := u.app.Store.Users.GetUserByUsername(c.Request.Context(), username)
-	if err != nil {
-		if errors.Is(err, errs.ErrUserNotFound) {
-			c.JSON(http.StatusNotFound, gin.H{"error": "user not found"})
-			return
-		}
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to retrieve user"})
-		return
-	}
+	// currentUser, err := u.app.Store.Users.GetUserByUsername(c.Request.Context(), username)
+	// if err != nil {
+	// 	if errors.Is(err, errs.ErrUserNotFound) {
+	// 		c.JSON(http.StatusNotFound, gin.H{"error": "user not found"})
+	// 		return
+	// 	}
+	// 	c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to retrieve user"})
+	// 	return
+	// }
 
-	if authUser.ID != currentUser.ID {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized to update this profile"})
-		return
-	}
+	// if authUser.ID != currentUser.ID {
+	// 	c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized to update this profile"})
+	// 	return
+	// }
 
 	msg, err := u.service.ChangePassword(c.Request.Context(), &payload, authUser.ID)
 	if err != nil {

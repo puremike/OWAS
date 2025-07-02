@@ -2,6 +2,7 @@ document.addEventListener('DOMContentLoaded', () => {
     console.log('Main JS loaded and DOM ready.');
     // Initialize WebSocket connection
     connectWebSocket();
+    
 
     // Optional: Call other global initializations if needed
     // Example: loadWonAuctions(); or loadActiveAuctions();
@@ -62,5 +63,44 @@ function updateAuctionPrice(auctionId, newPrice) {
 }
 
 function showNotification(message) {
-    alert(`New Notification: ${message}`);
+    // Create wrapper if it doesn't exist
+    let wrapper = document.getElementById('toast-wrapper');
+    if (!wrapper) {
+        wrapper = document.createElement('div');
+        wrapper.id = 'toast-wrapper';
+        wrapper.className = 'fixed bottom-5 right-5 space-y-3 z-50';
+        document.body.appendChild(wrapper);
+    }
+
+    // bg-indigo-100 border-indigo-300 text-indigo-900
+
+    // Create toast
+    const toast = document.createElement('div');
+    toast.className = `
+        max-w-xs w-full bg-indigo-100 border border-indigo-300 shadow-lg rounded-lg px-4 py-3 text-indigo-900 
+        flex items-center justify-between gap-3 
+        opacity-0 transform translate-y-2 transition-all duration-300 ease-in-out
+    `;
+
+    toast.innerHTML = `
+        <span class="text-md font-medium">${message}</span>
+        <button class="text-gray-400 hover:text-gray-600 focus:outline-none" onclick="this.parentElement.remove()">
+            &times;
+        </button>
+    `;
+
+    wrapper.appendChild(toast);
+
+    // Animate in
+    requestAnimationFrame(() => {
+        toast.classList.remove('opacity-0', 'translate-y-2');
+        toast.classList.add('opacity-100', 'translate-y-0');
+    });
+
+    // Auto-remove after 5 seconds
+    setTimeout(() => {
+        toast.classList.remove('opacity-100', 'translate-y-0');
+        toast.classList.add('opacity-0', 'translate-y-2');
+        setTimeout(() => toast.remove(), 1000);
+    }, 5000);
 }

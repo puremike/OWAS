@@ -9,7 +9,6 @@ import (
 
 	"github.com/puremike/online_auction_api/internal/errs"
 	"github.com/puremike/online_auction_api/internal/models"
-	"github.com/puremike/online_auction_api/internal/utils"
 )
 
 type UserStore struct {
@@ -146,11 +145,6 @@ func (u *UserStore) ChangePassword(ctx context.Context, pass, id string) error {
 	ctx, cancel := context.WithTimeout(ctx, QueryBackgroundTimeout)
 	defer cancel()
 
-	hashedPassword, err := utils.HashedPassword(pass)
-	if err != nil {
-		return err
-	}
-
 	query := `UPDATE users SET password = $1 WHERE id = $2`
 
 	tx, err := u.db.BeginTx(ctx, nil)
@@ -160,7 +154,7 @@ func (u *UserStore) ChangePassword(ctx context.Context, pass, id string) error {
 
 	defer tx.Rollback()
 
-	if _, err = tx.ExecContext(ctx, query, hashedPassword, id); err != nil {
+	if _, err = tx.ExecContext(ctx, query, pass, id); err != nil {
 		return err
 	}
 

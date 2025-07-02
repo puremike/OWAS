@@ -19,25 +19,42 @@ async function apiPost(endpoint, data) {
   return await response.json();
 }
 
-async function apiRequest(endpoint, method = 'GET', data = null, requiresAuth = false) {
-    const headers = { 'Content-Type': 'application/json' };
-    
-    const options = {
+async function apiRequest(path, method = 'GET', body = null, withAuth = false, retry = true) {
+  const headers = {
+      'Content-Type': 'application/json',
+  };
+
+  const options = {
       method,
       headers,
-      credentials: 'include'  // 🔑 This is critical for sending cookies!
-    };
-  
-    if (data) {
-      options.body = JSON.stringify(data);
-    }
-  
-    const response = await fetch(`${API_BASE_URL}${endpoint}`, options);  // Replace URL as needed
-  
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(errorText || 'API request failed');
-    }
-  
-    return response.json();
+      credentials: 'include', // Ensure cookies (jwt + refresh_token) are sent
+  };
+
+  if (body) {
+      options.body = JSON.stringify(body);
   }
+
+  const response = await fetch(`${API_BASE_URL}${path}`, options);
+
+  if (response.status === 401 && retry) {
+      // Try refreshing the token
+      const refreshResponse = await fetch(`${API_BASE_URL}/refresh`, {
+          method: 'POST',
+          credentials: 'include'
+      });
+
+      if (refreshResponse.ok) {
+          // Retry original request once
+          return apiRequest(path, method, body, withAuth, false);
+      } else {
+          throw new Error('Authentication expired. Please log in again.');
+      }
+  }
+
+  if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error || 'Request failed');
+  }
+
+  return response.json();
+}

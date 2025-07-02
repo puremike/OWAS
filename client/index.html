@@ -5,14 +5,34 @@
   <title>Online Auctions - Home</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="js/api.js" defer></script>
+  <script src="js/main.js" defer></script>
   <script src="js/nav.js" defer type="module"></script>
   <script src="js/index.js" defer></script>
-  <script src="js/main.js" defer></script>
   <style>
     /* Custom class for persistent click effect, Tailwind doesn't have a direct 'clicked' pseudo-class */
     .scale-95-persistent {
       transform: scale(1.25);
     }
+
+    .toast-notification {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background-color: #333;
+    color: white;
+    padding: 12px 20px;
+    border-radius: 8px;
+    opacity: 0;
+    transform: translateY(20px);
+    transition: opacity 0.3s ease, transform 0.3s ease;
+    z-index: 1000;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.toast-notification.show {
+    opacity: 1;
+    transform: translateY(0);
+}
   </style>
 </head>
 <body class="bg-gray-100 min-h-screen flex flex-col">

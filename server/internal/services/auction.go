@@ -188,10 +188,52 @@ func (a *AuctionService) GetAuctions(ctx context.Context, limit, offset int, fil
 	return res, nil
 }
 
+func (a *AuctionService) GetAuctionsBySellerID(ctx context.Context, sellerID string) (*[]models.CreateAuctionResponse, error) {
+
+	ctx, cancel := context.WithTimeout(ctx, QueryDefaultContext)
+	defer cancel()
+
+	auctions, err := a.repo.GetAuctionBySellerId(ctx, sellerID)
+	if err != nil {
+		return &[]models.CreateAuctionResponse{}, errors.New("failed to retrieve auctions")
+	}
+
+	res := &[]models.CreateAuctionResponse{}
+
+	for _, auction := range *auctions {
+		*res = append(*res, models.CreateAuctionResponse{
+			ID:            auction.ID,
+			SellerID:      auction.SellerID,
+			Title:         auction.Title,
+			Description:   auction.Description,
+			StartingPrice: auction.StartingPrice,
+			CurrentPrice:  auction.CurrentPrice,
+			Type:          auction.Type,
+			Status:        auction.Status,
+			StartTime:     auction.StartTime,
+			EndTime:       auction.EndTime,
+			CreatedAt:     auction.CreatedAt,
+			ImagePath:     auction.ImagePath,
+			IsPaid:        auction.IsPaid,
+		})
+	}
+
+	return res, nil
+}
+
 func (a *AuctionService) GetWonAuctionsByWinnerID(ctx context.Context, winnerID string) (*[]models.CreateAuctionResponse, error) {
 
 	ctx, cancel := context.WithTimeout(ctx, QueryDefaultContext)
 	defer cancel()
+
+	existingAuction, err := a.repo.GetAuctionByWinnerId(ctx, winnerID)
+	if err != nil {
+		return &[]models.CreateAuctionResponse{}, errs.ErrAuctionNotFound
+	}
+
+	if existingAuction.Status != "closed" {
+		return &[]models.CreateAuctionResponse{}, errs.ErrAuctionNotFound
+	}
 
 	auctions, err := a.repo.GetWonAuctionsByWinnerID(ctx, winnerID)
 	if err != nil {
@@ -219,4 +261,8 @@ func (a *AuctionService) GetWonAuctionsByWinnerID(ctx context.Context, winnerID 
 	}
 
 	return res, nil
+}
+
+func (a *AuctionService) GetBiddedAuctionsForUser(ctx context.Context, bidderID string) (*[]models.Auction, error) {
+	return a.repo.GetBiddedAuctions(context.Background(), bidderID)
 }

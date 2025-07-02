@@ -85,9 +85,10 @@ func Routes(app *config.Application) http.Handler {
 		authGroup.POST("/logout", userHandler.Logout)
 		authGroup.POST("/admin/logout", userHandler.Logout)
 		authGroup.GET("/me", userHandler.MeProfile)
+		authGroup.PUT("/change-password", userHandler.ChangePassword)
 		authGroup.GET("/:username", userHandler.UserProfile)
 		authGroup.PUT("/:username/update-profile", userHandler.UpdateProfile)
-		authGroup.PUT("/:username/change-password", userHandler.ChangePassword)
+
 		authGroup.DELETE("/users", userHandler.DeleteUser)
 
 		authGroup.GET("/admin/users", middlewares.AuthorizeRoles(true), userHandler.AdminGetUsers)
@@ -96,6 +97,8 @@ func Routes(app *config.Application) http.Handler {
 		authGroup.DELETE("/admin/auctions/:auctionID", middleware.AuctionMiddleware(), middlewares.AuthorizeRoles(true), auctionHandler.AdminDeleteAuction)
 
 		authGroup.GET("/auctions/won", auctionHandler.GetMyWonAuctions)
+		authGroup.GET("/auctions/bidded", auctionHandler.GetBiddedAuctions)
+		authGroup.GET("/auctions/created-auctions", auctionHandler.GetAuctionsBySellerID)
 
 		authGroup.POST("/auctions", auctionHandler.CreateAuction)
 		authGroup.GET("/auctions/:auctionID", middleware.AuctionMiddleware(), auctionHandler.GetAuctionById)

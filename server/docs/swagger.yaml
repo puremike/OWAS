@@ -20,6 +20,8 @@ definitions:
         type: string
       image_path:
         type: string
+      is_paid:
+        type: boolean
       seller_id:
         type: string
       start_time:
@@ -116,6 +118,8 @@ definitions:
         type: string
       image_path:
         type: string
+      is_paid:
+        type: boolean
       seller_id:
         type: string
       start_time:
@@ -320,47 +324,6 @@ paths:
       security:
       - jwtCookieAuth: []
       summary: Get User Profile
-      tags:
-      - Users
-  /{username}/change-password:
-    put:
-      consumes:
-      - application/json
-      description: Allows an authenticated user to change their password.
-      parameters:
-      - description: Password update payload
-        in: body
-        name: payload
-        required: true
-        schema:
-          $ref: '#/definitions/github_com_puremike_online_auction_api_internal_models.PasswordUpdateRequest'
-      - description: Username of the user to change password for
-        in: path
-        name: username
-        required: true
-        type: string
-      produces:
-      - application/json
-      responses:
-        "201":
-          description: Password changed successfully
-          schema:
-            type: string
-        "400":
-          description: Bad Request - invalid input
-          schema:
-            $ref: '#/definitions/gin.H'
-        "401":
-          description: Unauthorized - user not authenticated
-          schema:
-            $ref: '#/definitions/gin.H'
-        "500":
-          description: Internal Server Error - failed to change password
-          schema:
-            $ref: '#/definitions/gin.H'
-      security:
-      - jwtCookieAuth: []
-      summary: Change User Password
       tags:
       - Users
   /{username}/update-profile:
@@ -802,6 +765,33 @@ paths:
       summary: Create Stripe Checkout Session for an auction
       tags:
       - Payments
+  /auctions/bidded:
+    get:
+      consumes:
+      - application/json
+      description: Retrieves a list of auctions the user has bidded on.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: List of auctions
+          schema:
+            items:
+              $ref: '#/definitions/github_com_puremike_online_auction_api_internal_models.CreateAuctionResponse'
+            type: array
+        "401":
+          description: Unauthorized - user not authenticated
+          schema:
+            $ref: '#/definitions/gin.H'
+        "500":
+          description: Internal Server Error - failed to retrieve auctions
+          schema:
+            $ref: '#/definitions/gin.H'
+      security:
+      - jwtCookieAuth: []
+      summary: Get My Bidded Auctions
+      tags:
+      - Auctions
   /auctions/image_upload:
     post:
       consumes:
@@ -858,6 +848,47 @@ paths:
       summary: Get My Won Auctions
       tags:
       - Auctions
+  /change-password:
+    put:
+      consumes:
+      - application/json
+      description: Allows an authenticated user to change their password.
+      parameters:
+      - description: Password update payload
+        in: body
+        name: payload
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_puremike_online_auction_api_internal_models.PasswordUpdateRequest'
+      - description: Username of the user to change password for
+        in: path
+        name: username
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Password changed successfully
+          schema:
+            type: string
+        "400":
+          description: Bad Request - invalid input
+          schema:
+            $ref: '#/definitions/gin.H'
+        "401":
+          description: Unauthorized - user not authenticated
+          schema:
+            $ref: '#/definitions/gin.H'
+        "500":
+          description: Internal Server Error - failed to change password
+          schema:
+            $ref: '#/definitions/gin.H'
+      security:
+      - jwtCookieAuth: []
+      summary: Change User Password
+      tags:
+      - Users
   /contact-support:
     post:
       consumes:

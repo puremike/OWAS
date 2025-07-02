@@ -50,6 +50,16 @@ type CreateAuctionResponse struct {
 	IsPaid        bool      `json:"is_paid"`
 }
 
+type UpdateAuctionRequest struct {
+	Title         string  `json:"title" binding:"required"`
+	Description   string  `json:"description" binding:"required"`
+	StartingPrice float64 `json:"starting_price" binding:"required,gte=1"`
+	Type          string  `json:"type" binding:"required,oneof=english dutch sealed"`
+	StartTime     string  `json:"start_time" binding:"required"`
+	EndTime       string  `json:"end_time" binding:"required"`
+	ImagePath     string  `json:"image_path"`
+}
+
 type AuctionFilter struct {
 	Type          string  `json:"type"`
 	Category      string  `json:"category"`

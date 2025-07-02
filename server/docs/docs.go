@@ -271,6 +271,49 @@ const docTemplate = `{
                 }
             }
         },
+        "/auctions/bidded": {
+            "get": {
+                "security": [
+                    {
+                        "jwtCookieAuth": []
+                    }
+                ],
+                "description": "Retrieves a list of auctions the user has bidded on.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Auctions"
+                ],
+                "summary": "Get My Bidded Auctions",
+                "responses": {
+                    "200": {
+                        "description": "List of auctions",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/github_com_puremike_online_auction_api_internal_models.CreateAuctionResponse"
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized - user not authenticated",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error - failed to retrieve auctions",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    }
+                }
+            }
+        },
         "/auctions/image_upload": {
             "post": {
                 "description": "Allows a user to upload an image to the server.",
@@ -720,6 +763,70 @@ const docTemplate = `{
                 }
             }
         },
+        "/change-password": {
+            "put": {
+                "security": [
+                    {
+                        "jwtCookieAuth": []
+                    }
+                ],
+                "description": "Allows an authenticated user to change their password.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Users"
+                ],
+                "summary": "Change User Password",
+                "parameters": [
+                    {
+                        "description": "Password update payload",
+                        "name": "payload",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/github_com_puremike_online_auction_api_internal_models.PasswordUpdateRequest"
+                        }
+                    },
+                    {
+                        "type": "string",
+                        "description": "Username of the user to change password for",
+                        "name": "username",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Password changed successfully",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request - invalid input",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized - user not authenticated",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error - failed to change password",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    }
+                }
+            }
+        },
         "/contact-support": {
             "post": {
                 "security": [
@@ -1115,70 +1222,6 @@ const docTemplate = `{
                 }
             }
         },
-        "/{username}/change-password": {
-            "put": {
-                "security": [
-                    {
-                        "jwtCookieAuth": []
-                    }
-                ],
-                "description": "Allows an authenticated user to change their password.",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Users"
-                ],
-                "summary": "Change User Password",
-                "parameters": [
-                    {
-                        "description": "Password update payload",
-                        "name": "payload",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/github_com_puremike_online_auction_api_internal_models.PasswordUpdateRequest"
-                        }
-                    },
-                    {
-                        "type": "string",
-                        "description": "Username of the user to change password for",
-                        "name": "username",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "201": {
-                        "description": "Password changed successfully",
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request - invalid input",
-                        "schema": {
-                            "$ref": "#/definitions/gin.H"
-                        }
-                    },
-                    "401": {
-                        "description": "Unauthorized - user not authenticated",
-                        "schema": {
-                            "$ref": "#/definitions/gin.H"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error - failed to change password",
-                        "schema": {
-                            "$ref": "#/definitions/gin.H"
-                        }
-                    }
-                }
-            }
-        },
         "/{username}/update-profile": {
             "put": {
                 "security": [
@@ -1273,6 +1316,9 @@ const docTemplate = `{
                 },
                 "image_path": {
                     "type": "string"
+                },
+                "is_paid": {
+                    "type": "boolean"
                 },
                 "seller_id": {
                     "type": "string"
@@ -1410,6 +1456,9 @@ const docTemplate = `{
                 },
                 "image_path": {
                     "type": "string"
+                },
+                "is_paid": {
+                    "type": "boolean"
                 },
                 "seller_id": {
                     "type": "string"

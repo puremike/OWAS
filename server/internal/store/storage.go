@@ -30,6 +30,9 @@ type AuctionRepository interface {
 	DeleteAuction(ctx context.Context, id string) error
 	GetWonAuctionsByWinnerID(ctx context.Context, winnerID string) (*[]models.Auction, error)
 	UpdateAuctionPaymentStatus(ctx context.Context, isPaid bool, id string) error
+	GetBiddedAuctions(ctx context.Context, bidderID string) (*[]models.Auction, error)
+	GetAuctionByWinnerId(ctx context.Context, winnerID string) (*models.Auction, error)
+	GetAuctionBySellerId(ctx context.Context, sellerID string) (*[]models.Auction, error)
 }
 
 type BidRepository interface {
