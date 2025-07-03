@@ -12,14 +12,22 @@ let imagePath;
 
 document.addEventListener('DOMContentLoaded', async () => {
     try {
-        await apiRequest('/me', 'GET', null, true);  // Check auth first
+        document.getElementById('main-content').classList.add('hidden');
+        document.getElementById('loading-spinner').classList.remove('hidden');
+
+        await apiRequest('/me', 'GET', null, true);  // Auth check passed
+
+        // Hide spinner and show content
+        document.getElementById('loading-spinner').classList.add('hidden');
+        document.getElementById('main-content').classList.remove('hidden');
+       
     } catch (error) {
         console.error('JWT expired or user not authenticated.');
         window.location.href = 'auth.html';
         return; // Prevent rest of the page from loading
     }
 
-    document.body.classList.remove('invisible');
+    
     renderNav(document.getElementById('nav-buttons'));
 
     const urlParams = new URLSearchParams(window.location.search);
