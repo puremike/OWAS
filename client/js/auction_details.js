@@ -1,15 +1,5 @@
 let imagePath;
 
-// async function checkAuthAndLoadAuctionsSec() {
-//     try {
-//         await apiRequest('/me', 'GET', null, true);
-//         loadAuctions();
-//     } catch (error) {
-//         console.error('Auth check failed:', error);
-//         window.location.href = 'auth.html';
-//     }
-// }
-
 document.addEventListener('DOMContentLoaded', async () => {
     try {
        await apiRequest('/me', 'GET', null, true);  // Auth check passed

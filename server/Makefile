@@ -12,6 +12,17 @@ mdown:
 	@echo "Running DB migration on: $(DB_ADDR)"
 	migrate -database "$(DB_ADDR)" -path migrate/migrations down
 
+.PHONY: mupprod
+mup:
+	@echo "Running DB migration on: $(DB_ADDR)"
+	migrate -database "$(PROD_DB_ADDR)" -path migrate/migrations up
+
+
+.PHONY: mdownprod
+mdown:
+	@echo "Running DB migration on: $(DB_ADDR)"
+	migrate -database "$(PROD_DB_ADDR)" -path migrate/migrations down
+
 .PHONY: si
 si:
 	@echo "Generating Swagger docs..."
