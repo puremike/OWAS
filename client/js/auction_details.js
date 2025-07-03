@@ -11,8 +11,6 @@ let imagePath;
 // }
 
 document.addEventListener('DOMContentLoaded', async () => {
-    renderNav(document.getElementById('nav-buttons'));
-
     try {
         await apiRequest('/me', 'GET', null, true);  // Check auth first
     } catch (error) {
@@ -20,6 +18,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         window.location.href = 'auth.html';
         return; // Prevent rest of the page from loading
     }
+
+    document.body.classList.remove('invisible');
+    renderNav(document.getElementById('nav-buttons'));
 
     const urlParams = new URLSearchParams(window.location.search);
     const auctionId = urlParams.get('id');

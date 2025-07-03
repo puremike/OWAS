@@ -1,4 +1,10 @@
-const API_BASE_URL = "https://owas-server.onrender.com/api/v1";
+// const API_BASE_URL = "https://owas-server.onrender.com/api/v1";
+
+const isLocalhost = window.location.hostname === "localhost";
+
+const API_BASE_URL = isLocalhost
+  ? "http://localhost:3100/api/v1"
+  : "https://owas-server.onrender.com/api/v1";
 
 async function apiPost(endpoint, data) {
   const response = await fetch(`${API_BASE_URL}${endpoint}`, {
