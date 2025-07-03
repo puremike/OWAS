@@ -13,15 +13,13 @@ let imagePath;
 document.addEventListener('DOMContentLoaded', async () => {
     try {
        await apiRequest('/me', 'GET', null, true);  // Auth check passed
-        document.getElementById('page-body').classList.remove('hidden');
-       
     } catch (error) {
         console.error('JWT expired or user not authenticated.');
         window.location.href = 'auth.html';
         return; // Prevent rest of the page from loading
     }
 
-    
+    document.body.classList.remove('invisible');
     renderNav(document.getElementById('nav-buttons'));
 
     const urlParams = new URLSearchParams(window.location.search);
