@@ -48,6 +48,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     <div id="menu-dropdown" class="hidden absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-2 z-10">
       <a href="create_auction.html" class="block px-4 py-2 text-gray-800 hover:bg-blue-500 hover:text-white">Create Auctions</a>
       <a href="auctions.html" class="block px-4 py-2 text-gray-800 hover:bg-blue-500 hover:text-white">View Auctions</a>
+      <a href="auctions_created.html" class="block px-4 py-2 text-gray-800 hover:bg-blue-500 hover:text-white">My Auctions</a>
        <a href="auction_bidded.html" class="block px-4 py-2 text-gray-800 hover:bg-blue-500 hover:text-white">My Bidded Auctions</a>
        <a href="my_auctions.html" class="block px-4 py-2 text-gray-800 hover:bg-blue-500 hover:text-white">My Won Auctions</a>
       <a href="profile.html" class="block px-4 py-2 text-gray-800 hover:bg-blue-500 hover:text-white">Profile</a>
