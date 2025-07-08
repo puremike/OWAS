@@ -40,7 +40,7 @@ func (u *UserService) CreateUser(ctx context.Context, user *models.User) (*model
 	defer cancel()
 
 	// validation
-	if len(user.Username) < 6 || user.Email == "" || len(user.Password) < 8 || len(user.FullName) < 8 || len(user.Location) < 8 {
+	if len(user.Username) < 2 || user.Email == "" || len(user.Password) < 8 || len(user.FullName) < 2 || len(user.Location) < 2 {
 		return nil, errs.ErrInvalidUserDetails
 	}
 
@@ -213,7 +213,7 @@ func (u *UserService) UpdateProfile(ctx context.Context, req *models.User, id st
 	ctx, cancel := context.WithTimeout(ctx, QueryDefaultContext)
 	defer cancel()
 
-	if req.Username == "" || len(req.Username) < 4 || req.Email == "" || req.FullName == "" || len(req.FullName) < 6 || req.Location == "" || len(req.Location) < 6 {
+	if req.Username == "" || len(req.Username) < 2 || req.Email == "" || req.FullName == "" || len(req.FullName) < 2 || req.Location == "" || len(req.Location) < 2 {
 		return "", errs.ErrInvalidUserDetails
 	}
 

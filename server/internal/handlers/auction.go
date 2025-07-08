@@ -15,11 +15,11 @@ import (
 )
 
 type AuctionHandler struct {
-	service *services.AuctionService
+	service services.AuctionServiceInterface
 	app     *config.Application
 }
 
-func NewAuctionHandler(service *services.AuctionService, app *config.Application) *AuctionHandler {
+func NewAuctionHandler(service services.AuctionServiceInterface, app *config.Application) *AuctionHandler {
 	return &AuctionHandler{
 		service: service,
 		app:     app,

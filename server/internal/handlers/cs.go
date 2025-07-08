@@ -10,10 +10,10 @@ import (
 )
 
 type CSHandler struct {
-	csService *services.CSService
+	csService services.CSServiceInterface
 }
 
-func NewCSHandler(csService *services.CSService) *CSHandler {
+func NewCSHandler(csService services.CSServiceInterface) *CSHandler {
 	return &CSHandler{
 		csService: csService,
 	}

@@ -21,11 +21,11 @@ import (
 )
 
 type WebHookHandler struct {
-	service     *services.PaymentService
+	service     services.PaymentServiceInterface
 	auctionRepo store.AuctionRepository
 }
 
-func NewWebHookHander(service *services.PaymentService, auctionRepo store.AuctionRepository) *WebHookHandler {
+func NewWebHookHander(service services.PaymentServiceInterface, auctionRepo store.AuctionRepository) *WebHookHandler {
 	return &WebHookHandler{
 		service:     service,
 		auctionRepo: auctionRepo,
