@@ -21,6 +21,10 @@ import (
 	"github.com/puremike/online_auction_api/pkg"
 )
 
+type ImageServiceInterface interface {
+	UploadImage(ctx context.Context, file *multipart.FileHeader) (string, error)
+}
+
 type ImageService struct {
 	bucket *string
 	client *s3.Client

@@ -11,10 +11,10 @@ import (
 )
 
 type ImageHandler struct {
-	imageService *imagesuploader.ImageService
+	imageService imagesuploader.ImageServiceInterface
 }
 
-func NewImageHandler(imageService *imagesuploader.ImageService) *ImageHandler {
+func NewImageHandler(imageService imagesuploader.ImageServiceInterface) *ImageHandler {
 	return &ImageHandler{
 		imageService: imageService,
 	}
