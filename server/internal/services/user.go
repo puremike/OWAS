@@ -4,11 +4,13 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log"
 	"net/http"
 	"strings"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
+	"github.com/puremike/online_auction_api/internal/cached"
 	"github.com/puremike/online_auction_api/internal/config"
 	"github.com/puremike/online_auction_api/internal/errs"
 	"github.com/puremike/online_auction_api/internal/models"
@@ -19,14 +21,16 @@ import (
 )
 
 type UserService struct {
-	repo store.UserRepository
-	app  *config.Application
+	repo   store.UserRepository
+	app    *config.Application
+	cached cached.CachedUserInterface
 }
 
-func NewUserService(repo store.UserRepository, app *config.Application) *UserService {
+func NewUserService(repo store.UserRepository, app *config.Application, cached cached.CachedUserInterface) *UserService {
 	return &UserService{
-		repo: repo,
-		app:  app,
+		repo:   repo,
+		app:    app,
+		cached: cached,
 	}
 }
 
@@ -159,7 +163,7 @@ func (u *UserService) MeProfile(ctx context.Context, userID string) (*models.Use
 	ctx, cancel := context.WithTimeout(ctx, QueryDefaultContext)
 	defer cancel()
 
-	user, err := u.repo.GetUserById(ctx, userID)
+	user, err := u.cached.GetUserFromCache(ctx, userID)
 	if err != nil {
 		if errors.Is(err, errs.ErrUserNotFound) {
 			return &models.UserResponse{}, errs.ErrUserNotFound
@@ -240,13 +244,15 @@ func (u *UserService) ChangePassword(ctx context.Context, req *models.PasswordUp
 		return "", errs.ErrInvalidPassword
 	}
 
-	existingUser, err := u.repo.GetUserById(ctx, id)
+	existingUser, err := u.cached.GetUserFromCache(ctx, id)
 	if err != nil {
 		if errors.Is(err, errs.ErrUserNotFound) {
 			return "", errs.ErrUserNotFound
 		}
 		return "", fmt.Errorf("failed to retrieve user: %w", err)
 	}
+
+	log.Print(existingUser)
 
 	if err := utils.CompareHashedPassword(existingUser.Password, req.OldPassword); err != nil {
 		return "", errs.ErrInvalidPassword
@@ -301,7 +307,7 @@ func (u *UserService) DeleteUser(ctx context.Context, id string) (string, error)
 	ctx, cancel := context.WithTimeout(ctx, QueryDefaultContext)
 	defer cancel()
 
-	if err := u.repo.DeleteUser(ctx, id); err != nil {
+	if err := u.cached.DeleteUserFromCache(ctx, id); err != nil {
 		return "", errs.NewHTTPError("failed to delete user", http.StatusInternalServerError)
 	}
 	return "user deleted successfully", nil

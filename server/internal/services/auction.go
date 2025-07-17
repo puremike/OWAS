@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/puremike/online_auction_api/internal/cached"
 	"github.com/puremike/online_auction_api/internal/errs"
 	"github.com/puremike/online_auction_api/internal/models"
 	"github.com/puremike/online_auction_api/internal/store"
@@ -17,15 +18,17 @@ type AuctionService struct {
 	notRepo        store.NotificationRepository
 	auctionUpdates chan<- *models.AuctionUpdateEvent
 	notifications  chan<- *models.NotificationEvent
+	cached         cached.CachedAuctionInterface
 }
 
-func NewAuctionService(repo store.AuctionRepository, bidRepo store.BidRepository, notRepo store.NotificationRepository, auctionUpdates chan<- *models.AuctionUpdateEvent, notifications chan<- *models.NotificationEvent) *AuctionService {
+func NewAuctionService(repo store.AuctionRepository, bidRepo store.BidRepository, notRepo store.NotificationRepository, auctionUpdates chan<- *models.AuctionUpdateEvent, notifications chan<- *models.NotificationEvent, cached cached.CachedAuctionInterface) *AuctionService {
 	return &AuctionService{
 		repo:           repo,
 		bidRepo:        bidRepo,
 		notRepo:        notRepo,
 		auctionUpdates: auctionUpdates,
 		notifications:  notifications,
+		cached:         cached,
 	}
 }
 
@@ -116,7 +119,7 @@ func (a *AuctionService) DeleteAuction(ctx context.Context, id string) (string, 
 		return "", errs.ErrFailedToDeleteBids
 	}
 
-	if err := a.repo.DeleteAuction(ctx, id); err != nil {
+	if err := a.cached.DeleteAuctionFromCache(ctx, id); err != nil {
 		return "", errs.ErrFailedToDeleteAuction
 	}
 
@@ -128,7 +131,7 @@ func (a *AuctionService) GetAuctionById(ctx context.Context, id string) (*models
 	ctx, cancel := context.WithTimeout(ctx, QueryDefaultContext)
 	defer cancel()
 
-	auction, err := a.repo.GetAuctionById(ctx, id)
+	auction, err := a.cached.GetAuctionFromCache(ctx, id)
 	if err != nil {
 		if errors.Is(err, errs.ErrAuctionNotFound) {
 			return &models.CreateAuctionResponse{}, errs.ErrAuctionNotFound

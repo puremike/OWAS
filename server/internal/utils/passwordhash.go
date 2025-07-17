@@ -1,6 +1,10 @@
 package utils
 
-import "golang.org/x/crypto/bcrypt"
+import (
+	"log"
+
+	"golang.org/x/crypto/bcrypt"
+)
 
 func HashedPassword(password string) (string, error) {
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
@@ -12,4 +16,10 @@ func HashedPassword(password string) (string, error) {
 
 func CompareHashedPassword(hashedPassword, password string) error {
 	return bcrypt.CompareHashAndPassword([]byte(hashedPassword), []byte(password))
+}
+
+func QuickReturn() {
+	var pass = "@Password1234"
+	newPass, _ := HashedPassword(pass)
+	log.Print(newPass)
 }

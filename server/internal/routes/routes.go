@@ -7,6 +7,7 @@ import (
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
+	"github.com/puremike/online_auction_api/internal/cached"
 	"github.com/puremike/online_auction_api/internal/config"
 	"github.com/puremike/online_auction_api/internal/handlers"
 	"github.com/puremike/online_auction_api/internal/imagesuploader"
@@ -37,10 +38,12 @@ func Routes(app *config.Application) http.Handler {
 		MaxAge:           12 * time.Hour,
 	}))
 
-	userService := services.NewUserService(app.Store.Users, app)
+	cachedService := cached.NewCached(app)
+
+	userService := services.NewUserService(app.Store.Users, app, cachedService.User)
 	userHandler := handlers.NewUserHandler(userService, app)
 
-	auctionService := services.NewAuctionService(app.Store.Auctions, app.Store.Bids, app.Store.Notifications, app.WsHub.AuctionUpdates, app.WsHub.NotificationUpdates)
+	auctionService := services.NewAuctionService(app.Store.Auctions, app.Store.Bids, app.Store.Notifications, app.WsHub.AuctionUpdates, app.WsHub.NotificationUpdates, cachedService.Auction)
 	auctionHandler := handlers.NewAuctionHandler(auctionService, app)
 
 	middleware := middlewares.NewMiddleware(app)

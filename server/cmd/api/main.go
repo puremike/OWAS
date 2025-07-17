@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/go-redis/redis/v8"
 	_ "github.com/lib/pq"
 	"github.com/puremike/online_auction_api/docs"
 	"github.com/puremike/online_auction_api/internal/auth"
@@ -9,6 +10,7 @@ import (
 	"github.com/puremike/online_auction_api/internal/payments"
 	"github.com/puremike/online_auction_api/internal/routes"
 	"github.com/puremike/online_auction_api/internal/store"
+	"github.com/puremike/online_auction_api/internal/store/cache"
 	"github.com/puremike/online_auction_api/internal/ws"
 	"go.uber.org/zap"
 )
@@ -59,6 +61,18 @@ func main() {
 
 	logger.Infow("Connected to database successfully")
 
+	var rdb *redis.Client
+	if cfg.RedisCacheConf.Enabled {
+		rdb = cache.NewRedisClient(cfg.RedisCacheConf.Addr, cfg.RedisCacheConf.Password, cfg.RedisCacheConf.DB)
+
+		defer rdb.Close()
+
+		if err := rdb.Ping(rdb.Context()).Err(); err != nil {
+			logger.Fatalw("Failed to connect to Redis cache", "error", err)
+		}
+		logger.Infow("Connected to Redis cache successfully")
+	}
+
 	gLm, sLm, hLm := config.MyRateLimiters(cfg)
 
 	app := &config.Application{
@@ -72,6 +86,7 @@ func main() {
 		SensitiveRateLimiter: sLm,
 		HeavyOpsRateLimiter:  hLm,
 		Stripe:               payments.NewStripePayment(cfg.StripeConf.StripeSecretKey, cfg.StripeConf.CancelURL, cfg.StripeConf.SuccessURL),
+		RedisCache:           cache.NewRDBCacheStorage(rdb),
 	}
 
 	go app.WsHub.Run()

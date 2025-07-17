@@ -6,6 +6,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/puremike/online_auction_api/internal/cached"
 	"github.com/puremike/online_auction_api/internal/config"
 	"github.com/puremike/online_auction_api/internal/errs"
 	"github.com/puremike/online_auction_api/internal/models"
@@ -24,10 +25,11 @@ func TestCreateUser_Success(t *testing.T) {
 
 	mockRepo := new(mock_store.MockUserStore)
 	app := &config.Application{}
+	cached := cached.NewCached(app)
 	hashedPassword, err := utils.HashedPassword("@SecurePassword123")
 	require.NoError(err, "Expected no error when hashing password")
 
-	userService := services.NewUserService(mockRepo, app)
+	userService := services.NewUserService(mockRepo, app, cached.User)
 
 	expectedUser := &models.User{
 		ID:        "test-id-1",
@@ -70,7 +72,8 @@ func TestCreateUser_Success(t *testing.T) {
 func TestCreateUser_InvalidDetails(t *testing.T) {
 	mockRepo := new(mock_store.MockUserStore)
 	app := &config.Application{}
-	userService := services.NewUserService(mockRepo, app)
+	cached := cached.NewCached(app)
+	userService := services.NewUserService(mockRepo, app, cached.User)
 
 	tests := []struct {
 		name          string

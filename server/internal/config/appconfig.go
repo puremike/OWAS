@@ -7,6 +7,8 @@ import (
 	"github.com/puremike/online_auction_api/internal/payments"
 	"github.com/puremike/online_auction_api/internal/ratelimiters"
 	"github.com/puremike/online_auction_api/internal/store"
+	"github.com/puremike/online_auction_api/internal/store/cache"
+
 	"github.com/puremike/online_auction_api/internal/ws"
 	"github.com/puremike/online_auction_api/pkg"
 	"go.uber.org/zap"
@@ -23,18 +25,27 @@ type Application struct {
 	SensitiveRateLimiter ratelimiters.Limiter
 	HeavyOpsRateLimiter  ratelimiters.Limiter
 	Stripe               *payments.StripePayment
+	RedisCache           *cache.Storage
 }
 
 type AppConfig struct {
-	Port        string
-	Env         string
-	DbConfig    DbConfig
-	AuthConfig  AuthConfig
-	GeneralRL   RateLimiterConf
-	SensitiveRL RateLimiterConf
-	HeavyOpsRL  RateLimiterConf
-	StripeConf  StripeConf
-	S3Bucket    string
+	Port           string
+	Env            string
+	DbConfig       DbConfig
+	AuthConfig     AuthConfig
+	GeneralRL      RateLimiterConf
+	SensitiveRL    RateLimiterConf
+	HeavyOpsRL     RateLimiterConf
+	StripeConf     StripeConf
+	S3Bucket       string
+	RedisCacheConf RedisCacheConf
+}
+
+type RedisCacheConf struct {
+	Addr     string
+	Password string
+	DB       int
+	Enabled  bool
 }
 
 type StripeConf struct {
@@ -68,6 +79,12 @@ const ApiVersion = "1.0.1"
 
 func MyCfg() *AppConfig {
 	return &AppConfig{
+		RedisCacheConf: RedisCacheConf{
+			Addr:     pkg.GetEnvString("REDIS_ADDR", "localhost:6379"),
+			Password: pkg.GetEnvString("REDIS_PASSWORD", ""),
+			DB:       pkg.GetEnvInt("REDIS_DB", 0),
+			Enabled:  pkg.GetEnvBool("REDIS_ENABLED", false),
+		},
 		Port:     pkg.GetEnvString("PORT", "8080"),
 		Env:      pkg.GetEnvString("ENV", "development"),
 		S3Bucket: pkg.GetEnvString("S3_BUCKET", ""),
